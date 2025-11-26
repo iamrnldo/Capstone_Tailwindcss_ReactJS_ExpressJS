@@ -1,157 +1,14 @@
-// src/pages/index.jsx
-import { useState, useRef, useEffect } from "react";
-import React from "react";
 import element1 from "@/assets/element/element1.png";
-import jet from "@/assets/element/jet.png";
 import hero1 from "@/assets/hero/hero1.png";
-import logo1 from "@/assets/logo/logo1.png";
 
-// Make app layout & pages for structure
-
-
-const Home = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-  const buttonRef = useRef(null);
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target)
-      ) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    if (isMenuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    } else {
-      document.removeEventListener("click", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
+const PortalPage = () => {
   return (
     <>
-      {/* Navigation */}
-      <nav className="w-full bg-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <div className="flex items-center">
-              <a href="/">
-                <img className="h-10 w-auto" src={logo1} alt="Logo" />
-              </a>
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-8">
-              <a
-                href="#"
-                className="text-neutral-400 hover:text-sky-900 text-lg font-bold transition-colors duration-200"
-              >
-                Beranda
-              </a>
-              <a
-                href="#"
-                className="text-neutral-400 hover:text-sky-900 text-lg font-bold transition-colors duration-200"
-              >
-                Fitur
-              </a>
-              <a
-                href="#"
-                className="text-neutral-400 hover:text-sky-900 text-lg font-bold transition-colors duration-200"
-              >
-                Testimoni
-              </a>
-            </div>
-
-            {/* Get Started Button (always visible) */}
-            <div className="flex items-center gap-4">
-              <button className="px-4 py-2 bg-gradient-to-r from-blue-700 to-purple-500 rounded-2xl flex items-center gap-2 hover:opacity-90 transition-opacity duration-200 text-sm md:text-base md:px-5 md:py-2.5 md:gap-4">
-                <span className="text-white font-medium md:text-xl">
-                  Get Started
-                </span>
-                <img
-                  className="w-4 h-4 md:w-5 md:h-5"
-                  src={jet}
-                  alt="Jet Icon"
-                />
-              </button>
-
-              {/* Hamburger Button (Mobile only) - Animated */}
-              <button
-                ref={buttonRef}
-                className="md:hidden text-sky-900 w-6 h-6 flex flex-col justify-center items-center"
-                onClick={toggleMenu}
-              >
-                <div className="w-6 h-5 relative flex flex-col justify-between">
-                  <span
-                    className={`block h-0.5 w-full bg-sky-900 transition-all duration-300 ${
-                      isMenuOpen ? "rotate-45 translate-y-2" : ""
-                    }`}
-                  ></span>
-                  <span
-                    className={`block h-0.5 w-full bg-sky-900 transition-all duration-300 ${
-                      isMenuOpen ? "opacity-0" : ""
-                    }`}
-                  ></span>
-                  <span
-                    className={`block h-0.5 w-full bg-sky-900 transition-all duration-300 ${
-                      isMenuOpen ? "-rotate-45 -translate-y-2" : ""
-                    }`}
-                  ></span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Dropdown Menu with Animation (only links, since button is always visible) */}
-          <div
-            ref={menuRef}
-            className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-              isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-            }`}
-          >
-            <div className="flex flex-col items-center gap-4 py-4 bg-white shadow-lg border-t border-gray-200">
-              <a
-                href="#"
-                className="text-neutral-400 hover:text-sky-900 text-lg font-bold transition-colors duration-200"
-                onClick={toggleMenu}
-              >
-                Beranda
-              </a>
-              <a
-                href="#"
-                className="text-neutral-400 hover:text-sky-900 text-lg font-bold transition-colors duration-200"
-                onClick={toggleMenu}
-              >
-                Fitur
-              </a>
-              <a
-                href="#"
-                className="text-neutral-400 hover:text-sky-900 text-lg font-bold transition-colors duration-200"
-                onClick={toggleMenu}
-              >
-                Testimoni
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+      <section
+        
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20"
+      >
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-6 py-2 bg-sky-100 rounded-full">
@@ -441,7 +298,7 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="bg-white py-20">
+      <section id="fitur" className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-semibold text-black mb-4">
@@ -528,7 +385,10 @@ const Home = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <section
+        id="testimoni"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"
+      >
         <div className="text-center mb-16">
           <h2 className="text-3xl font-semibold text-black mb-4">
             Kata Mereka Tentang EduSukses
@@ -691,87 +551,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-sky-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-8">
-            <div className="text-center md:text-left">
-              <img
-                className="w-36 h-24 mx-auto md:mx-0 mb-4"
-                src="https://placehold.co/140x98"
-                alt="Logo"
-              />
-              <h3 className="text-3xl font-bold">EduSukses</h3>
-              <p className="mt-4">Belajar Fleksibel, Prestasi Maksimal</p>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Pengguna</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="hover:underline">
-                    Beranda
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:underline">
-                    Kelas
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:underline">
-                    Try Out
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Tentang Kami</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="hover:underline">
-                    FAQ
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:underline">
-                    Hubungi Kami
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Media Sosial</h4>
-              <div className="flex gap-4">
-                <a
-                  href="#"
-                  className="w-10 h-10 bg-white rounded-full hover:opacity-80 transition"
-                ></a>
-                <a
-                  href="#"
-                  className="w-10 h-10 bg-white rounded-full hover:opacity-80 transition"
-                ></a>
-                <a
-                  href="#"
-                  className="w-10 h-10 bg-white rounded-full hover:opacity-80 transition"
-                ></a>
-                <a
-                  href="#"
-                  className="w-10 h-10 bg-white rounded-full hover:opacity-80 transition"
-                ></a>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-600 pt-8 text-center">
-            <p>© 2025 EduSukses. All Rights Reserved.</p>
-          </div>
-        </div>
-      </footer>
+      
     </>
   );
 };
 
-export default Home;
+export default PortalPage;

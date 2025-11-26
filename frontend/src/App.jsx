@@ -1,7 +1,13 @@
-import Home from "./pages/index";
+import Header from "@/layouts/header";
+import Footer from "@/layouts/footer";
+import PortalPage from "@/pages/portal";
 
-function App() {
-  return <Home />;
+export default function App() {
+  return (
+    <>
+      <Header />
+      <PortalPage />
+      <Footer />
+    </>
+  );
 }
-
-export default App;
