@@ -1,12 +1,9 @@
-
-
 // Placeholder images - replace with your actual imports
 import logo2 from "@/assets/logo/logo2.png";
 import Whatsapp from "@/assets/element/whatsapp.svg";
 import Linkedin from "@/assets/element/linkedin.svg";
 import Instagram from "@/assets/element/instagram.svg";
 import Tiktok from "@/assets/element/tiktok.svg";
-
 
 const Footer = () => {
   return (
@@ -150,7 +147,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-white/10 pt-6 md:pt-8 text-center text-xs md:text-sm opacity-70">
-          <p>© 2025 EduSukses. All Rights Reserved.</p>
+          <p>© {new Date().getFullYear()} EduSukses. All Rights Reserved.</p>
         </div>
       </div>
     </footer>

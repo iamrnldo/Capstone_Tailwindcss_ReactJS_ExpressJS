@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"; // Added import
 import element1 from "@/assets/element/element1.png";
 import hero1 from "@/assets/hero/hero1.png";
 
@@ -5,10 +6,7 @@ const PortalPage = () => {
   return (
     <>
       {/* Hero Section */}
-      <section
-        
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20"
-      >
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-6 py-2 bg-sky-100 rounded-full">
@@ -58,12 +56,15 @@ const PortalPage = () => {
               </div>
             </div>
 
-            <button className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-700 to-purple-500 rounded-2xl flex items-center justify-center gap-4 hover:opacity-90 transition">
+            <Link
+              to="/login"
+              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-700 to-purple-500 rounded-2xl flex items-center justify-center gap-4 hover:opacity-90 transition"
+            >
               <span className="text-white text-xl font-medium">
                 Mulai Belajar Gratis
               </span>
               <div className="w-5 h-5 border-2 border-white rounded"></div>
-            </button>
+            </Link>
           </div>
 
           <div className="relative">
@@ -550,8 +551,6 @@ const PortalPage = () => {
           </div>
         </div>
       </section>
-
-      
     </>
   );
 };
