@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Login from "@/assets/hero/login.png";
 import logo2 from "@/assets/logo/logo2.png";
-import { ReactComponent as GoogleIcon } from "@/assets/element/google.svg";
+import google from "@/assets/element/google.svg";
 
 const LoginPage = () => {
   return (
@@ -16,6 +16,7 @@ const LoginPage = () => {
                 src={Login}
                 alt="Education illustration"
               />
+             
             </div>
           </div>
 
@@ -48,7 +49,11 @@ const LoginPage = () => {
 
               {/* Google Login Button */}
               <button className="w-full px-8 py-4 bg-sky-900 rounded-lg flex items-center justify-center gap-4 hover:bg-sky-800 transition">
-                <GoogleIcon className="w-7 h-7" />
+                <img
+                  className="w-7 h-7 rounded-full"
+                  src={google}
+                  alt="Google"
+                />
                 <span className="text-white text-xl font-normal">
                   Login with google
                 </span>
