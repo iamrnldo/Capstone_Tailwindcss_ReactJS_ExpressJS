@@ -47,7 +47,9 @@
                 </h2>
 
                 {/* Google Register Button */}
-                <button className="w-full px-8 py-4 bg-sky-900 rounded-lg flex items-center justify-center gap-4 hover:bg-sky-800 transition">
+                <button
+                  onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
+                  className="w-full px-8 py-4 bg-sky-900 rounded-lg flex items-center justify-center gap-4 hover:bg-sky-800 transition">
                   <img
                     className="w-7 h-7 rounded-full"
                     src={google}

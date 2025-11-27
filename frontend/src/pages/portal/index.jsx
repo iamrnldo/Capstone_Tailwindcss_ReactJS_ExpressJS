@@ -1,10 +1,31 @@
 import { Link } from "react-router-dom"; // Added import
 import element1 from "@/assets/element/element1.png";
 import hero1 from "@/assets/hero/hero1.png";
+import { useContext } from "react";
+import { AuthContext } from "@/context/AuthContext"; // Added import
+
 
 const PortalPage = () => {
+  const { user, logout } = useContext(AuthContext);
   return (
     <>
+      {/* Add this for user display */}
+      {user && (
+        <div className="text-center mb-8">
+          <h2>Welcome, {user.name}!</h2>
+          <img
+            src={user.picture}
+            alt="Profile"
+            className="w-20 h-20 rounded-full mx-auto"
+          />
+          <button
+            onClick={logout}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+          >
+            Logout
+          </button>
+        </div>
+      )}
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">

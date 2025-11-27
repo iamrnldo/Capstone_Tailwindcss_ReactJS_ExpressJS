@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom"; // Added import
 import logo1 from "@/assets/logo/logo1.png";
 import jet from "@/assets/element/jet.png";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 const menuItems = [
   { name: "Beranda", hash: "#" },
@@ -16,6 +18,7 @@ const Header = () => {
   const [activeLink, setActiveLink] = useState("");
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
+  const { user, logout } = useContext(AuthContext);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -81,15 +84,29 @@ const Header = () => {
 
           {/* Get Started + Hamburger */}
           <div className="flex items-center gap-4">
-            <Link
-              to="/login"
-              className="px-4 py-2 bg-gradient-to-r from-blue-700 to-purple-500 rounded-2xl flex items-center gap-2 hover:opacity-90 transition-all duration-300 ease-out text-sm md:text-base md:px-5 md:py-2.5 md:gap-4 hover:scale-105 active:scale-95"
-            >
-              <span className="text-white font-medium md:text-xl">
-                Get Started
-              </span>
-              <img className="w-4 h-4 md:w-5 md:h-5" src={jet} alt="Jet Icon" />
-            </Link>
+            {user ? (
+              <button
+                onClick={logout}
+                className="px-4 py-2 bg-red-500 text-white rounded"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-2 bg-gradient-to-r from-blue-700 to-purple-500 rounded-2xl flex items-center gap-2 hover:opacity-90 transition-all duration-300 ease-out text-sm md:text-base md:px-5 md:py-2.5 md:gap-4 hover:scale-105 active:scale-95"
+              >
+                <span className="text-white font-medium md:text-xl">
+                  Get Started
+                </span>
+                <img
+                  className="w-4 h-4 md:w-5 md:h-5"
+                  src={jet}
+                  alt="Jet Icon"
+                />
+              </Link>
+            )}
+
             <button
               ref={buttonRef}
               className="md:hidden text-sky-900 w-6 h-6 flex flex-col justify-center items-center focus:outline-none"

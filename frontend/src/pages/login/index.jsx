@@ -2,8 +2,11 @@ import { Link } from "react-router-dom";
 import Login from "@/assets/hero/login.png";
 import logo2 from "@/assets/logo/logo2.png";
 import google from "@/assets/element/google.svg";
+import { useContext } from 'react'; // Added
+import { AuthContext } from '../../context/AuthContext'; // Added (adjust path if needed)
 
 const LoginPage = () => {
+  const { error } = useContext(AuthContext); // Added for error display
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-7xl mx-auto">
@@ -16,7 +19,6 @@ const LoginPage = () => {
                 src={Login}
                 alt="Education illustration"
               />
-             
             </div>
           </div>
 
@@ -46,9 +48,16 @@ const LoginPage = () => {
               <h2 className="text-black text-xl font-medium">
                 Daftar menggunakan e-mail:
               </h2>
-
+              {/* Error Display */}
+              {error && <p className="text-red-500 text-lg">{error}</p>}{" "}
+              {/* Added */}
               {/* Google Login Button */}
-              <button className="w-full px-8 py-4 bg-sky-900 rounded-lg flex items-center justify-center gap-4 hover:bg-sky-800 transition">
+              <button
+                onClick={() =>
+                  (window.location.href = "http://localhost:5000/auth/google")
+                }
+                className="w-full px-8 py-4 bg-sky-900 rounded-lg flex items-center justify-center gap-4 hover:bg-sky-800 transition"
+              >
                 <img
                   className="w-7 h-7 rounded-full"
                   src={google}
@@ -58,7 +67,6 @@ const LoginPage = () => {
                   Login with google
                 </span>
               </button>
-
               {/* Register Link */}
               <div className="text-center">
                 <p className="text-black text-lg">
@@ -71,7 +79,6 @@ const LoginPage = () => {
                   </Link>
                 </p>
               </div>
-
               {/* Register Button */}
               <Link
                 to="/register"
