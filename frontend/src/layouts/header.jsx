@@ -5,10 +5,14 @@ import jet from "@/assets/element/jet.png";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
-const menuItems = [
+const loggedOutMenu = [
   { name: "Beranda", hash: "#" },
   { name: "Fitur", hash: "#fitur" },
   { name: "Testimoni", hash: "#testimoni" },
+];
+
+const loggedInMenu = [
+  { name: "Beranda", hash: "#" },
   { name: "Kelas", hash: "#kelas" },
   { name: "Try Out", hash: "#tryout" },
 ];
@@ -19,6 +23,8 @@ const Header = () => {
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const { user, logout } = useContext(AuthContext);
+
+  const menuItems = user ? loggedInMenu : loggedOutMenu;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
