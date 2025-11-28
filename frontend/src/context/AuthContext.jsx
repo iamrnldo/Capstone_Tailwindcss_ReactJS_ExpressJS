@@ -66,11 +66,11 @@ export const AuthProvider = ({ children }) => {
     return config;
   });
 
- return (
-   <AuthContext.Provider value={{ user, loading, error, logout }}>
-     {" "}
-     {/* Added error to context */}
-     {children}
-   </AuthContext.Provider>
- );
+  return (
+    <AuthContext.Provider value={{ user, setUser, loading, error, logout }}>
+      {" "}
+      {/* Added setUser */}
+      {children}
+    </AuthContext.Provider>
+  );
 };

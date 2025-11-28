@@ -4,7 +4,8 @@ import Footer from "@/layouts/footer";
 import PortalPage from "@/pages/portal";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
-import Dashboard from "@/pages/dashboard"; // Add this import
+import Dashboard from "@/pages/dashboard";
+import Profile from "@/pages/profile"; // Add this import
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function App() {
@@ -27,7 +28,17 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Header />
-            <Dashboard /> {/* Changed from PortalPage to Dashboard */}
+            <Dashboard />
+            <Footer />
+          </ProtectedRoute>
+        }
+      />
+      <Route // Added this route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Header />
+            <Profile />
             <Footer />
           </ProtectedRoute>
         }

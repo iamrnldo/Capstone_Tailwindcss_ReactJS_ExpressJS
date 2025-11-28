@@ -17,12 +17,13 @@ passport.use(
       const picture = photos[0].value;
 
       try {
-        let user = await db.query("SELECT * FROM users WHERE google_id = $1", [
-          google_id,
-        ]);
+        let user = await db.query(
+          "SELECT * FROM google_users WHERE google_id = $1",
+          [google_id]
+        );
         if (user.rows.length === 0) {
           user = await db.query(
-            "INSERT INTO users (google_id, name, email, picture) VALUES ($1, $2, $3, $4) RETURNING *",
+            "INSERT INTO google_users (google_id, name, email, picture) VALUES ($1, $2, $3, $4) RETURNING *",
             [google_id, name, email, picture]
           );
         }
@@ -41,6 +42,6 @@ passport.use(
 
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
-  const user = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+  const user = await db.query("SELECT * FROM google_users WHERE id = $1", [id]);
   done(null, user.rows[0]);
 });

@@ -19,14 +19,17 @@ const loggedInMenu = [
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Added for dropdown
   const [activeLink, setActiveLink] = useState("");
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
+  const dropdownRef = useRef(null); // Added for dropdown ref
   const { user, logout } = useContext(AuthContext);
 
   const menuItems = user ? loggedInMenu : loggedOutMenu;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   // Active link berdasarkan hash + default Beranda
   useEffect(() => {
@@ -49,13 +52,21 @@ const Header = () => {
       ) {
         setIsMenuOpen(false);
       }
+      // Close dropdown if click outside
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
     };
 
-    if (isMenuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    }
+    document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isDropdownOpen]);
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      logout();
+    }
+  };
 
   const linkClasses = (hash) =>
     `text-lg font-bold transition-colors duration-300 ease-out ${
@@ -88,15 +99,54 @@ const Header = () => {
             ))}
           </div>
 
-          {/* Get Started + Hamburger */}
+          {/* Get Started / Profile Dropdown + Hamburger */}
           <div className="flex items-center gap-4">
             {user ? (
-              <button
-                onClick={logout}
-                className="px-4 py-2 bg-red-500 text-white rounded"
-              >
-                Logout
-              </button>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={toggleDropdown}
+                  className="flex items-center gap-2 focus:outline-none"
+                >
+                  <img
+                    src={user.picture}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <span className="text-sky-900 font-medium">{user.name}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${
+                      isDropdownOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Setting
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link
                 to="/login"
