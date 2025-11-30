@@ -2,17 +2,20 @@ const express = require("express");
 const passport = require("passport");
 const session = require("express-session");
 const cors = require("cors");
-const jwt = require("jsonwebtoken"); // Add this import for JWT verification
-const db = require("./db"); // Add this import for DB queries
-const cloudinary = require("cloudinary").v2; // Add for Cloudinary
-const multer = require("multer"); // Add for file uploads
-const fs = require("fs"); // Add for file system cleanup
+const jwt = require("jsonwebtoken");
+const db = require("./db");
+const cloudinary = require("cloudinary").v2;
+const multer = require("multer");
+const fs = require("fs");
 require("dotenv").config();
-require("./passport"); // Load Passport config
+require("./passport");
 
 const app = express();
 
-// Add body parsers for JSON and URL-encoded
+// Import profile router
+const profileRouter = require("./profile");
+
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -23,10 +26,10 @@ cloudinary.config({
   api_secret: process.env.API_SECRET,
 });
 
-// Multer setup for temporary file storage
+// Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Temporary folder (create it if it doesn't exist)
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
@@ -61,7 +64,7 @@ function authenticateJWT(req, res, next) {
     if (err) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    req.user = decoded; // Sets req.user to { id: ... }
+    req.user = decoded;
     next();
   });
 }
@@ -79,7 +82,7 @@ app.get(
   (req, res) => {
     res.redirect(
       `${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`
-    ); // Changed from /portal to /dashboard
+    );
   }
 );
 
@@ -87,7 +90,7 @@ app.get(
 app.get("/api/user", authenticateJWT, async (req, res) => {
   try {
     const user = await db.query("SELECT * FROM google_users WHERE id = $1", [
-      req.user.id, // Changed from req.auth.id to req.user.id
+      req.user.id,
     ]);
     if (user.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
@@ -98,7 +101,10 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
   }
 });
 
-// New Route: Update Name (protected)
+// Mount profile router - ADD THIS LINE
+app.use("/api/profile", profileRouter);
+
+// Legacy endpoints (optional - can be removed if using profile router)
 app.put("/api/update-name", authenticateJWT, async (req, res) => {
   const { name } = req.body;
   if (!name) {
@@ -120,7 +126,6 @@ app.put("/api/update-name", authenticateJWT, async (req, res) => {
   }
 });
 
-// New Route: Upload Profile Picture to Cloudinary (protected)
 app.post(
   "/api/upload-picture",
   authenticateJWT,
@@ -131,24 +136,20 @@ app.post(
     }
 
     try {
-      // Upload to Cloudinary
       const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "profile_pictures", // Optional: organize in a folder
-        public_id: `user_${req.user.id}`, // Optional: unique ID based on user
+        folder: "profile_pictures",
+        public_id: `user_${req.user.id}`,
       });
 
-      // Update user's picture URL in DB
       await db.query("UPDATE google_users SET picture = $1 WHERE id = $2", [
         result.secure_url,
         req.user.id,
       ]);
 
-      // Clean up temporary file
       fs.unlinkSync(req.file.path);
 
       res.json({ picture: result.secure_url });
     } catch (err) {
-      // Clean up on error
       if (req.file) fs.unlinkSync(req.file.path);
       res.status(500).json({ message: "Upload failed", error: err.message });
     }
