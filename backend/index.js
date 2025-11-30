@@ -12,8 +12,9 @@ require("./passport");
 
 const app = express();
 
-// Import profile router
+// Import routers
 const profileRouter = require("./profile");
+const authRouter = require("./auth");
 
 // Body parsers
 app.use(express.json());
@@ -86,23 +87,37 @@ app.get(
   }
 );
 
-// Protected Route (get user info)
+// Protected Route (get user info from both tables)
 app.get("/api/user", authenticateJWT, async (req, res) => {
   try {
-    const user = await db.query("SELECT * FROM google_users WHERE id = $1", [
-      req.user.id,
-    ]);
+    let user;
+
+    // Try to find in regular users table first
+    user = await db.query(
+      "SELECT id, name, email, picture, created_at FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    // If not found, try google_users table
+    if (user.rows.length === 0) {
+      user = await db.query("SELECT * FROM google_users WHERE id = $1", [
+        req.user.id,
+      ]);
+    }
+
     if (user.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }
     res.json(user.rows[0]);
   } catch (err) {
+    console.error("Get user error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// Mount profile router - ADD THIS LINE
+// Mount routers
 app.use("/api/profile", profileRouter);
+app.use("/api/auth", authRouter);
 
 // Legacy endpoints (optional - can be removed if using profile router)
 app.put("/api/update-name", authenticateJWT, async (req, res) => {

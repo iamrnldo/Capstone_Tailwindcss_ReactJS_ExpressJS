@@ -7,7 +7,7 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-// Configure Cloudinary (redundant if in index.js, but for modularity)
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
@@ -17,7 +17,7 @@ cloudinary.config({
 // Multer setup for temporary file storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Temporary folder (create it if it doesn't exist)
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
@@ -25,7 +25,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// JWT authentication middleware (copied for modularity; can be imported if shared)
+// JWT authentication middleware
 function authenticateJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -41,23 +41,47 @@ function authenticateJWT(req, res, next) {
     if (err) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    req.user = decoded; // Sets req.user to { id: ... }
+    req.user = decoded;
     next();
   });
+}
+
+// Helper function to determine which table to use
+async function findUserTable(userId) {
+  // Try users table first
+  const regularUser = await db.query("SELECT * FROM users WHERE id = $1", [
+    userId,
+  ]);
+  if (regularUser.rows.length > 0) {
+    return { table: "users", user: regularUser.rows[0] };
+  }
+
+  // Try google_users table
+  const googleUser = await db.query(
+    "SELECT * FROM google_users WHERE id = $1",
+    [userId]
+  );
+  if (googleUser.rows.length > 0) {
+    return { table: "google_users", user: googleUser.rows[0] };
+  }
+
+  return null;
 }
 
 // GET /api/profile - Get user profile
 router.get("/", authenticateJWT, async (req, res) => {
   try {
-    const user = await db.query("SELECT * FROM google_users WHERE id = $1", [
-      req.user.id,
-    ]);
-    if (user.rows.length === 0) {
+    const result = await findUserTable(req.user.id);
+
+    if (!result) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user.rows[0]);
+
+    // Remove password if exists
+    const { password, ...userWithoutPassword } = result.user;
+    res.json(userWithoutPassword);
   } catch (err) {
-    console.error("Get profile error:", err); // Added logging
+    console.error("Get profile error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -70,16 +94,22 @@ router.put("/", authenticateJWT, async (req, res) => {
   }
 
   try {
-    const updatedUser = await db.query(
-      "UPDATE google_users SET name = $1 WHERE id = $2 RETURNING *",
-      [name, req.user.id]
-    );
-    if (updatedUser.rows.length === 0) {
+    const result = await findUserTable(req.user.id);
+
+    if (!result) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(updatedUser.rows[0]);
+
+    const updatedUser = await db.query(
+      `UPDATE ${result.table} SET name = $1 WHERE id = $2 RETURNING *`,
+      [name, req.user.id]
+    );
+
+    // Remove password if exists
+    const { password, ...userWithoutPassword } = updatedUser.rows[0];
+    res.json(userWithoutPassword);
   } catch (err) {
-    console.error("Update name error:", err); // Added logging
+    console.error("Update name error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -95,25 +125,31 @@ router.post(
     }
 
     try {
-      // Upload to Cloudinary with updated folder path
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "user_profiles", // Changed folder path from 'profile_pictures' to 'user_profiles'
-        public_id: `user_${req.user.id}`, // Unique ID based on user
+      const result = await findUserTable(req.user.id);
+
+      if (!result) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Upload to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        folder: "user_profiles",
+        public_id: `user_${req.user.id}`,
       });
 
       // Update user's picture URL in DB
-      await db.query("UPDATE google_users SET picture = $1 WHERE id = $2", [
-        result.secure_url,
+      await db.query(`UPDATE ${result.table} SET picture = $1 WHERE id = $2`, [
+        uploadResult.secure_url,
         req.user.id,
       ]);
 
       // Clean up temporary file
       fs.unlinkSync(req.file.path);
 
-      res.json({ picture: result.secure_url });
+      res.json({ picture: uploadResult.secure_url });
     } catch (err) {
-      console.error("Upload picture error:", err); // Added logging
-      // Clean up on error
+      console.error("Upload picture error:", err);
       if (req.file) fs.unlinkSync(req.file.path);
       res.status(500).json({ message: "Upload failed", error: err.message });
     }
