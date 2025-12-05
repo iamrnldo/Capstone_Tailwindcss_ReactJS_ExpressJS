@@ -6,9 +6,11 @@ import logo2 from "@/assets/logo/logo2.png";
 import google from "@/assets/element/google.svg";
 import { AuthContext } from "../../context/AuthContext";
 
+
+
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { error: contextError } = useContext(AuthContext);
+  const { error: contextError, setUser } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -18,6 +20,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
+    
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -25,6 +28,7 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -35,12 +39,10 @@ const LoginPage = () => {
         password: formData.password,
       });
 
-      // Save token
+      // In handleSubmit, replace the redirect part after saving token:
       localStorage.setItem("token", res.data.token);
-
-      // Redirect to dashboard
+      setUser(res.data.user);
       navigate("/dashboard");
-      window.location.reload(); // Reload to update AuthContext
     } catch (err) {
       const errorData = err.response?.data;
 

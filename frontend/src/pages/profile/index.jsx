@@ -54,7 +54,7 @@ const Profile = () => {
       setError(null);
       setSuccess(null);
       const res = await axios.post(
-        "http://localhost:5000/api/upload-picture",
+        "http://localhost:5000/api/profile/upload-picture",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

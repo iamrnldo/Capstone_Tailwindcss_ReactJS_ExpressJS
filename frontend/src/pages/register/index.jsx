@@ -47,7 +47,7 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
       });
-
+localStorage.setItem("token", res.data.token);
       // Redirect to verification pending page
       navigate("/verification-pending", {
         state: { email: formData.email },

@@ -116,7 +116,7 @@ router.put("/", authenticateJWT, async (req, res) => {
 
 // POST /api/profile/picture - Upload profile picture to Cloudinary
 router.post(
-  "/picture",
+  "/upload-picture",
   authenticateJWT,
   upload.single("picture"),
   async (req, res) => {
