@@ -12,7 +12,7 @@ const loggedOutMenu = [
 ];
 
 const loggedInMenu = [
-  { name: "Beranda", hash: "#" },
+  { name: "Beranda", hash: "/dashboard" },
   { name: "Kelas", hash: "#kelas" },
   { name: "Try Out", hash: "#tryout" },
 ];

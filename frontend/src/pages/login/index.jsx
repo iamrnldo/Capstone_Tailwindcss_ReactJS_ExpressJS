@@ -42,9 +42,17 @@ const LoginPage = () => {
       navigate("/dashboard");
       window.location.reload(); // Reload to update AuthContext
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Login gagal. Silakan coba lagi."
-      );
+      const errorData = err.response?.data;
+
+      // Check if email needs verification
+      if (errorData?.needsVerification) {
+        navigate("/verification-pending", {
+          state: { email: errorData.email },
+        });
+        return;
+      }
+
+      setError(errorData?.message || "Login gagal. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }

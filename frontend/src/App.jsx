@@ -4,8 +4,10 @@ import Footer from "@/layouts/footer";
 import PortalPage from "@/pages/portal";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
+import VerifyEmail from "@/pages/VerifyEmail";
+import VerificationPending from "@/pages/VerificationPending";
 import Dashboard from "@/pages/dashboard";
-import Profile from "@/pages/profile"; // Add this import
+import Profile from "@/pages/profile";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
       />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/verification-pending" element={<VerificationPending />} />
       <Route
         path="/dashboard"
         element={
@@ -33,7 +37,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route // Added this route
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>

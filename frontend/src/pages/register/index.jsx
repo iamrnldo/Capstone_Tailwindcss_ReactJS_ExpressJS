@@ -48,12 +48,10 @@ const RegisterPage = () => {
         password: formData.password,
       });
 
-      // Save token
-      localStorage.setItem("token", res.data.token);
-
-      // Redirect to dashboard
-      navigate("/dashboard");
-      window.location.reload(); // Reload to update AuthContext
+      // Redirect to verification pending page
+      navigate("/verification-pending", {
+        state: { email: formData.email },
+      });
     } catch (err) {
       setError(
         err.response?.data?.message || "Registrasi gagal. Silakan coba lagi."

@@ -1,63 +1,308 @@
-import { useContext } from "react";
-import { AuthContext } from "../../context/AuthContext"; // Adjust path if needed (based on your structure)
+import hero1 from "@/assets/hero/hero1.png";
 
 const Dashboard = () => {
-  const { user, logout } = useContext(AuthContext);
-
-  if (!user) {
-    return <div>Loading user data...</div>;
-  }
-
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-sky-900 mb-8">
-          Welcome to Your Dashboard, {user.name}!
-        </h1>
-        <img
-          src={user.picture}
-          alt="Profile"
-          className="w-24 h-24 rounded-full mx-auto mb-4"
-        />
-        <p className="text-lg text-black mb-6">Email: {user.email}</p>
-        <p className="text-lg text-black mb-6">
-          Member since: {new Date(user.created_at).toLocaleDateString()}
-        </p>
-
-        {/* Placeholder for dashboard features */}
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-indigo-50 rounded-[20px] p-8 text-center">
-            <h2 className="text-2xl font-semibold text-zinc-800 mb-4">
-              Recent Classes
-            </h2>
-            <p className="text-base text-black">
-              No recent classes yet. Start exploring!
+    <>
+      {/* Hero Section */}
+      <section class="bg-gradient-to-l from-blue-500 via-fuchsia-300 to-blue-300 py-8">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center gap-8">
+          <div class="flex-1 space-y-6">
+            <div class="space-y-4">
+              <p class="text-white text-3xl font-medium">Hallo, Tania ;)</p>
+              <h2 class="text-white text-5xl font-semibold">
+                Siap lanjut belajar hari ini?
+              </h2>
+              <h3 class="text-white text-5xl font-semibold">
+                Yuk mulai dari topik yang paling kamu butuh
+              </h3>
+            </div>
+            <p class="text-zinc-900 text-xl">
+              Temukan solusi lengkap untuk anak SMA berprestasi dengan kelas
+              interaktif dan pendekatan kontekstual.
             </p>
-            <a href="#kelas" className="text-blue-700 hover:underline">
-              Go to Classes
-            </a>
+            <button class="px-4 py-3.5 bg-sky-900 rounded-full text-white text-lg font-semibold">
+              Belajar Sekarang
+            </button>
           </div>
-          <div className="bg-indigo-50 rounded-[20px] p-8 text-center">
-            <h2 className="text-2xl font-semibold text-zinc-800 mb-4">
-              Try Outs
-            </h2>
-            <p className="text-base text-black">
-              Prepare for exams with our try outs.
-            </p>
-            <a href="#tryout" className="text-blue-700 hover:underline">
-              Start Try Out
-            </a>
+          <img
+            class="w-full md:w-1/2 h-auto rounded-[250px]"
+            src={hero1}
+            alt="Hero Image"
+          />
+        </div>
+      </section>
+      {/* Rekomendasi Belajar  */}
+      <section class="container mx-auto px-4 py-8">
+        <h2 class="text-zinc-900 text-2xl font-semibold mb-6">
+          Rekomendasi Belajar
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div class="rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex-1 bg-gray-200"></div> {/* Placeholder for image */}
+            <div class="p-6 bg-zinc-900/75 text-slate-50 text-xl font-semibold">
+              Mengenal arti fungsi, cara kerja relasi, dan contoh penerapannya.
+            </div>
+          </div>
+          {/* Repeat for other 4 items */}
+          <div class="rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex-1 bg-gray-200"></div>
+            <div class="p-6 bg-zinc-900/75 text-slate-50 text-xl font-semibold">
+              Mengenal arti fungsi, cara kerja relasi, dan contoh penerapannya.
+            </div>
+          </div>
+          <div class="rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex-1 bg-gray-200"></div>
+            <div class="p-6 bg-zinc-900/75 text-slate-50 text-xl font-semibold">
+              Mengenal arti fungsi, cara kerja relasi, dan contoh penerapannya.
+            </div>
+          </div>
+          <div class="rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex-1 bg-gray-200"></div>
+            <div class="p-6 bg-zinc-900/75 text-slate-50 text-xl font-semibold">
+              Mengenal arti fungsi, cara kerja relasi, dan contoh penerapannya.
+            </div>
+          </div>
+          <div class="rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex-1 bg-gray-200"></div>
+            <div class="p-6 bg-zinc-900/75 text-slate-50 text-xl font-semibold">
+              Mengenal arti fungsi, cara kerja relasi, dan contoh penerapannya.
+            </div>
           </div>
         </div>
+      </section>
 
-        <button
-          onClick={logout}
-          className="mt-8 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
+      {/* Latihan Soal */}
+      <section class="container mx-auto px-4 py-8 space-y-8">
+        <h2 class="text-zinc-900 text-2xl font-semibold">Latihan Soal</h2>
+        {/* Each exercise card */}
+        <div class="bg-amber-200 rounded-[50px] p-6 flex flex-col md:flex-row items-center gap-6">
+          <img
+            class="w-full md:w-48 h-44 rounded-2xl"
+            src="https://placehold.co/193x176"
+            alt="Fungsi"
+          />
+          <div class="flex-1 space-y-4">
+            <h3 class="text-sky-900 text-3xl font-semibold">Fungsi</h3>
+            <p class="text-zinc-900 text-xl font-semibold">
+              Mengenal konsep fungsi, domain, range, dan contoh penerapannya
+              dalam soal.
+            </p>
+            <div class="flex gap-8">
+              <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 bg-sky-900 rounded-full"></div>
+                <span class="text-zinc-900 text-xl">10 Soal</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 bg-sky-900 rounded-full"></div>
+                <span class="text-zinc-900 text-xl">Estimasi 30 Menit</span>
+              </div>
+            </div>
+            <button class="px-4 py-2.5 bg-sky-900 rounded-full text-slate-50 text-lg font-semibold">
+              Coba Sekarang
+            </button>
+          </div>
+        </div>
+        {/* Repeat for other two */}
+        <div class="bg-amber-200 rounded-[50px] p-6 flex flex-col md:flex-row items-center gap-6">
+          <img
+            class="w-full md:w-60 h-44 rounded-2xl"
+            src="https://placehold.co/245x176"
+            alt="Descriptive Text"
+          />
+          <div class="flex-1 space-y-4">
+            <h3 class="text-sky-900 text-3xl font-semibold">
+              Descriptive Text
+            </h3>
+            <p class="text-zinc-900 text-xl font-semibold">
+              Mengenal grammar, vocabulary, reading, writing dan contoh
+              penerapannya dalam soal.
+            </p>
+            <div class="flex gap-8">
+              <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 bg-sky-900 rounded-full"></div>
+                <span class="text-zinc-900 text-xl">10 Soal</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 bg-sky-900 rounded-full"></div>
+                <span class="text-zinc-900 text-xl">Estimasi 30 Menit</span>
+              </div>
+            </div>
+            <button class="px-4 py-2.5 bg-sky-900 rounded-full text-slate-50 text-lg font-semibold">
+              Coba Sekarang
+            </button>
+          </div>
+        </div>
+        <div class="bg-amber-200 rounded-[50px] p-6 flex flex-col md:flex-row items-center gap-6">
+          <img
+            class="w-full md:w-48 h-44 rounded-2xl"
+            src="https://placehold.co/193x176"
+            alt="Struktur dan Fungsi Jaringan Tumbuhan"
+          />
+          <div class="flex-1 space-y-4">
+            <h3 class="text-sky-900 text-3xl font-semibold">
+              Struktur dan Fungsi Jaringan Tumbuhan
+            </h3>
+            <p class="text-zinc-900 text-xl font-semibold">
+              Mengenal Pengertian, Jenis Jaringan, Struktur, Fungsi, serta
+              Contoh Penerapan dalam Soal.
+            </p>
+            <div class="flex gap-8">
+              <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 bg-sky-900 rounded-full"></div>
+                <span class="text-zinc-900 text-xl">10 Soal</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 bg-sky-900 rounded-full"></div>
+                <span class="text-zinc-900 text-xl">Estimasi 30 Menit</span>
+              </div>
+            </div>
+            <button class="px-4 py-2.5 bg-sky-900 rounded-full text-slate-50 text-lg font-semibold">
+              Coba Sekarang
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Mengapa Memilih */}
+      <section class="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+        <img
+          class="w-full md:w-1/2 h-auto"
+          src="https://placehold.co/500x500"
+          alt="Why Choose"
+        />
+        <div class="flex-1 space-y-8">
+          <h2 class="text-zinc-900 text-2xl font-semibold">
+            Mengapa Memilih Belajar di EduSukses?
+          </h2>
+          <div>
+            <h3 class="text-blue-600 text-2xl font-semibold">
+              Belajar Nyaman dan Fleksibel
+            </h3>
+            <p class="text-zinc-900 text-xl">
+              Siswa SMA dapat mengakses materi kapan saja dengan jadwal yang
+              fleksibel, sehingga belajar tidak terbatas oleh waktu maupun
+              tempat.
+            </p>
+          </div>
+          <div>
+            <h3 class="text-blue-600 text-2xl font-semibold">
+              Metode Pembelajaran Interaktif
+            </h3>
+            <p class="text-zinc-900 text-xl">
+              EduSukses menghadirkan video materi, diskusi real-time, dan modul
+              terpersonalisasi yang membuat proses belajar lebih menarik serta
+              relevan dengan kebutuhan siswa SMA.
+            </p>
+          </div>
+          <div>
+            <h3 class="text-blue-600 text-2xl font-semibold">
+              Guru Profesional dan Kompeten
+            </h3>
+            <p class="text-zinc-900 text-xl">
+              Pengajar berpengalaman siap menciptakan lingkungan belajar
+              kondusif dengan materi berkualitas yang dirancang khusus untuk
+              mendukung persiapan kuliah dan karier masa depan.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimoni */}
+      <section class="container mx-auto px-4 py-8">
+        <h2 class="text-zinc-900 text-2xl font-semibold mb-6">
+          Kata Mereka Tentang EduSukses
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-slate-50 rounded-2xl border border-neutral-400 p-6 space-y-4">
+            <div class="flex items-start gap-4">
+              <img
+                class="w-16 h-16 rounded-full"
+                src="https://placehold.co/70x70"
+                alt="Rani"
+              />
+              <div>
+                <p class="text-blue-600 text-xl font-semibold">Rani</p>
+                <p class="text-neutral-400 text-base font-semibold">Kelas 12</p>
+              </div>
+            </div>
+            <p class="text-zinc-900 text-base">
+              "Belajar di EduSukses membuat saya lebih mudah memahami materi
+              yang sulit. Kelas interaktifnya membantu saya berani bertanya dan
+              berdiskusi langsung dengan guru. Sekarang saya lebih siap
+              menghadapi ujian akhir dan seleksi masuk kuliah."
+            </p>
+          </div>
+          {/* Repeat for other two testimonials */}
+          <div class="bg-slate-50 rounded-2xl border border-neutral-400 p-6 space-y-4">
+            <div class="flex items-start gap-4">
+              <img
+                class="w-16 h-16 rounded-full"
+                src="https://placehold.co/70x70"
+                alt="Sehan"
+              />
+              <div>
+                <p class="text-blue-600 text-xl font-semibold">Sehan</p>
+                <p class="text-neutral-400 text-base font-semibold">Kelas 12</p>
+              </div>
+            </div>
+            <p class="text-zinc-900 text-base">
+              "Saat SMA, saya menggunakan EduSukses untuk mempersiapkan ujian
+              masuk perguruan tinggi. Modul terpersonalisasi dan asesmen yang
+              jelas membuat saya bisa memilih jurusan sesuai minat. Kini saya
+              kuliah di kampus impian berkat dukungan EduSukses."
+            </p>
+          </div>
+          <div class="bg-slate-50 rounded-2xl border border-neutral-400 p-6 space-y-4">
+            <div class="flex items-start gap-4">
+              <img
+                class="w-16 h-16 rounded-full"
+                src="https://placehold.co/70x70"
+                alt="Rani"
+              />
+              <div>
+                <p class="text-blue-600 text-xl font-semibold">Rani</p>
+                <p class="text-neutral-400 text-base font-semibold">Kelas 12</p>
+              </div>
+            </div>
+            <p class="text-zinc-900 text-base">
+              "EduSukses membantu saya menemukan jurusan yang tepat melalui
+              asesmen karier. Materinya tidak hanya akademik, tapi juga melatih
+              soft skills seperti komunikasi dan problem solving. Pengalaman
+              belajar di EduSukses benar-benar mendukung perjalanan saya menuju
+              dunia perkuliahan."
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section class="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+        <div class="flex-1 space-y-4">
+          <h2 class="text-zinc-900 text-2xl font-semibold">
+            Pertanyaan Umum yang Sering Diajukan (FAQ)
+          </h2>
+          <div class="space-y-2">
+            <div class="bg-emerald-500 p-4 flex justify-between items-center text-slate-50 text-xl font-semibold">
+              <span>Apa tujuan aplikasi ini?</span>
+              <div class="w-5 h-5 border-2 border-slate-50"></div>
+            </div>
+            <div class="bg-emerald-500 p-4 flex justify-between items-center text-slate-50 text-xl font-semibold">
+              <span>Bagaimana cara belajar di EduSukses?</span>
+              <div class="w-5 h-5 border-2 border-slate-50"></div>
+            </div>
+            <div class="bg-emerald-500 p-4 flex justify-between items-center text-slate-50 text-xl font-semibold">
+              <span>Apakah EduSukses bantu persiapan kuliah?</span>
+              <div class="w-5 h-5 border-2 border-slate-50"></div>
+            </div>
+          </div>
+        </div>
+        <img
+          class="w-full md:w-1/2 h-auto"
+          src="https://placehold.co/501x501"
+          alt="FAQ Image"
+        />
+      </section>
+    </>
   );
 };
 
