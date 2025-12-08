@@ -201,7 +201,41 @@ const sendWelcomeEmail = async (email, userName) => {
   }
 };
 
+
+const sendResetPasswordEmail = async (email, token, name) => {
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+  const mailOptions = {
+    from: `"EduSukses" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Reset Password Anda - EduSukses",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2>Halo ${name}!</h2>
+        <p>Kami menerima permintaan reset password untuk akun Anda.</p>
+        <p>Klik tombol di bawah ini untuk mengatur ulang password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetLink}" style="background:#0c4a6e;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;">Reset Password</a>
+        </div>
+        <p>Link ini akan kadaluarsa dalam 1 jam.</p>
+        <p>Jika Anda tidak meminta reset password, abaikan email ini.</p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("Error sending reset email:", error);
+    return false;
+  }
+};
+
+
+
 module.exports = {
   sendVerificationEmail,
   sendWelcomeEmail,
+  sendResetPasswordEmail,
 };

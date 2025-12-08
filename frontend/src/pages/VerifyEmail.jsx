@@ -1,3 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/*for (let index = 0; index < array.length; index++) {
+  const element = array[index];
+}eslint-disable react-hooks/immutability */
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -19,7 +23,7 @@ const VerifyEmail = () => {
     }
 
     verifyEmail(token);
-  }, [searchParams]);
+  }, [searchParams,]);
 
   const verifyEmail = async (token) => {
     try {

@@ -76,14 +76,12 @@ app.get(
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-// Callback Route
+// Callback Route - Fixed for instant dashboard access
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
+  passport.authenticate("google", { failureRedirect: `${process.env.FRONTEND_URL}/login` }),
   (req, res) => {
-    res.redirect(
-      `${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`
-    );
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`);
   }
 );
 

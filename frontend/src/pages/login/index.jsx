@@ -1,198 +1,259 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useContext } from "react";
-import axios from "axios";
-import Login from "@/assets/hero/login.png";
+import { AuthContext } from "../../context/AuthContext";
+import login2 from "@/assets/hero/login2.png";
 import logo2 from "@/assets/logo/logo2.png";
 import google from "@/assets/element/google.svg";
-import { AuthContext } from "../../context/AuthContext";
+import IconEmail from "@/assets/element/icon email.svg";
+import IconPassword from "@/assets/element/icon password.svg";
+import IconEyeOpen from "@/assets/element/buka_mata.svg";
+import IconEyeClosed from "@/assets/element/tutup_mata.svg";
 
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { error: contextError, setUser } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    if (error) setError(null);
   };
 
   const handleSubmit = async (e) => {
-    
     e.preventDefault();
     setError(null);
+
+    if (!formData.email || !formData.password) {
+      setError("Email dan password harus diisi");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
+      const result = await login(formData.email, formData.password);
 
-      // In handleSubmit, replace the redirect part after saving token:
-      localStorage.setItem("token", res.data.token);
-      setUser(res.data.user);
-      navigate("/dashboard");
-    } catch (err) {
-      const errorData = err.response?.data;
-
-      // Check if email needs verification
-      if (errorData?.needsVerification) {
+      if (result.success) {
+        navigate("/dashboard");
+      } else if (result.needsVerification) {
         navigate("/verification-pending", {
-          state: { email: errorData.email },
+          state: { email: result.email },
         });
-        return;
+      } else {
+        setError(result.error);
       }
-
-      setError(errorData?.message || "Login gagal. Silakan coba lagi.");
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/auth/google";
+    window.location.href = `${API_URL}/auth/google`;
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Side - Illustration */}
-          <div className="hidden lg:flex justify-center items-center relative">
-            <div className="relative">
-              <img
-                className="w-full h-auto object-contain"
-                src={Login}
-                alt="Education illustration"
-              />
-            </div>
-          </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+        {/* Left Section - Form */}
+        <div className="px-6 sm:px-8 md:px-12 lg:px-16 py-8 flex flex-col justify-center">
+          <header className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#012f72] font-poppins">
+              Login
+            </h1>
+          </header>
 
-          {/* Right Side - Login Form */}
-          <div className="flex flex-col items-center lg:items-start space-y-8">
-            {/* Logo and Title */}
-            <div className="text-center lg:text-left">
-              <div className="flex items-center justify-center lg:justify-start gap-4 mb-4">
-                <img
-                  className="w-20 h-14 object-contain"
-                  src={logo2}
-                  alt="Logo"
-                />
-                <h1 className="text-sky-900 text-4xl lg:text-5xl font-bold">
-                  EduSukses
-                </h1>
-              </div>
-              <p className="text-black text-lg lg:text-xl mt-4">
-                Bangun kebiasaan belajar yang konsisten
-                <br />
-                dan hasil nyata lewat pengalaman interaktif.
-              </p>
-            </div>
-
-            {/* Login Section */}
-            <div className="w-full max-w-md space-y-6">
-              <h2 className="text-black text-xl font-medium">
-                Masuk ke akun Anda
-              </h2>
-
-              {/* Error Display */}
-              {(error || contextError) && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                  {error || contextError}
-                </div>
-              )}
-
-              {/* Email/Password Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-base font-medium text-black mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-900 focus:border-transparent outline-none transition"
-                    placeholder="nama@email.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-base font-medium text-black mb-2">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-900 focus:border-transparent outline-none transition"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full px-8 py-4 bg-sky-900 rounded-lg hover:bg-sky-800 transition disabled:bg-sky-600 disabled:cursor-not-allowed"
-                >
-                  <span className="text-white text-xl font-semibold">
-                    {loading ? "Memproses..." : "Masuk"}
-                  </span>
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="flex items-center">
-                <div className="flex-1 border-t-2 border-gray-300"></div>
-                <span className="px-4 text-gray-500 text-base">ATAU</span>
-                <div className="flex-1 border-t-2 border-gray-300"></div>
-              </div>
-
-              {/* Google Login Button */}
-              <button
-                onClick={handleGoogleLogin}
-                className="w-full px-8 py-4 bg-white border-2 border-sky-900 rounded-lg flex items-center justify-center gap-4 hover:bg-sky-50 transition"
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-start gap-2">
+              <svg
+                className="w-5 h-5 flex-shrink-0 mt-0.5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
               >
-                <img
-                  className="w-7 h-7 rounded-full"
-                  src={google}
-                  alt="Google"
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
                 />
-                <span className="text-sky-900 text-xl font-normal">
-                  Masuk dengan Google
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm text-black mb-1.5"
+              >
+                Email <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
+                  <img src={IconEmail} alt="" className="w-full h-full" />
                 </span>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="Masukkan email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full h-12 pl-11 pr-4 bg-white rounded-xl border border-neutral-400 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm text-black mb-1.5"
+              >
+                Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
+                  <img src={IconPassword} alt="" className="w-full h-full" />
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  placeholder="Masukkan password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full h-12 pl-11 pr-12 bg-white rounded-xl border border-neutral-400 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:opacity-70 transition-opacity"
+                >
+                  <img
+                    src={showPassword ? IconEyeOpen : IconEyeClosed}
+                    alt=""
+                    className="w-5 h-5"
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-[#012f72] hover:underline"
+              >
+                Lupa Password?
+              </Link>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-[#012f72] text-white text-base font-semibold rounded-full hover:bg-[#012559] focus:outline-none focus:ring-2 focus:ring-[#012f72] focus:ring-offset-2 transition-colors disabled:bg-[#012f72]/60 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Memproses...
+                  </>
+                ) : (
+                  "Login"
+                )}
               </button>
 
-              {/* Register Link */}
-              <div className="text-center pt-4">
-                <p className="text-black text-lg">
-                  Belum punya akun?{" "}
-                  <Link
-                    to="/register"
-                    className="text-sky-900 font-semibold underline hover:text-sky-700"
-                  >
-                    Daftar di sini
-                  </Link>
-                </p>
+              <div className="flex items-center gap-4">
+                <hr className="flex-1 border-neutral-300" />
+                <span className="text-sm text-neutral-400">atau</span>
+                <hr className="flex-1 border-neutral-300" />
               </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full h-12 bg-white border-2 border-[#012f72] text-[#012f72] text-base font-semibold rounded-full hover:bg-[#012f72]/5 focus:outline-none focus:ring-2 focus:ring-[#012f72] focus:ring-offset-2 transition-colors flex items-center justify-center gap-3"
+              >
+                <img src={google} alt="" className="w-6 h-6" />
+                <span>Login with Google</span>
+              </button>
+            </div>
+          </form>
+
+          <p className="text-center text-base mt-6">
+            <span className="text-black">Belum punya akun?</span>
+            <Link
+              to="/register"
+              className="text-[#012f72] font-semibold hover:underline ml-1"
+            >
+              Register di sini
+            </Link>
+          </p>
+        </div>
+
+        {/* Right Section - Hero */}
+        <aside className="hidden lg:flex flex-col bg-white p-8 sticky top-0 h-screen">
+          <div className="flex items-start gap-4 mb-6">
+            <img
+              src={logo2}
+              alt="Logo EduSukses"
+              className="w-16 h-20 object-contain flex-shrink-0"
+            />
+            <div>
+              <h2 className="text-3xl font-bold text-[#012f72] font-poppins mb-2">
+                EduSukses
+              </h2>
+              <p className="text-sm text-black leading-relaxed">
+                Bangun kebiasaan belajar yang konsisten dan hasil nyata lewat
+                pengalaman interaktif.
+              </p>
             </div>
           </div>
-        </div>
+
+          <div className="flex-1 rounded-2xl overflow-hidden">
+            <img
+              src={login2}
+              alt="Ilustrasi pembelajaran online"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </aside>
       </div>
     </div>
   );

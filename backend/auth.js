@@ -4,27 +4,56 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const db = require("./db");
-const { sendVerificationEmail, sendWelcomeEmail } = require("./emailService");
+const {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  sendResetPasswordEmail,
+} = require("./emailService");
 require("dotenv").config();
 
 // Register new user
+// ✅ NEW CODE - Extracts all fields
 router.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  // Extract ALL fields from request body
+  const { name, email, password, phone, gender, kelas, peminatan, school } = req.body;
 
   // Validation
   if (!name || !email || !password) {
-    return res.status(400).json({ message: "Semua field harus diisi" });
+    return res.status(400).json({ message: "Nama, email, dan password harus diisi" });
   }
 
-  if (password.length < 6) {
-    return res.status(400).json({ message: "Password minimal 6 karakter" });
+  if (password.length < 8) {
+    return res.status(400).json({ message: "Password minimal 8 karakter" });
+  }
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: "Format email tidak valid" });
+  }
+
+  // Validate enum values if provided
+  const validGenders = ['laki-laki', 'perempuan'];
+  const validKelas = ['10', '11', '12'];
+  const validPeminatan = ['ipa', 'ips', 'bahasa'];
+
+  if (gender && !validGenders.includes(gender)) {
+    return res.status(400).json({ message: "Jenis kelamin tidak valid" });
+  }
+
+  if (kelas && !validKelas.includes(kelas)) {
+    return res.status(400).json({ message: "Kelas tidak valid" });
+  }
+
+  if (peminatan && !validPeminatan.includes(peminatan)) {
+    return res.status(400).json({ message: "Peminatan tidak valid" });
   }
 
   try {
     // Check if user already exists
     const existingUser = await db.query(
       "SELECT * FROM users WHERE email = $1",
-      [email]
+      [email.toLowerCase()]
     );
 
     if (existingUser.rows.length > 0) {
@@ -39,32 +68,69 @@ router.post("/register", async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Insert user (unverified)
+    // Insert user with ALL fields
     const newUser = await db.query(
-      "INSERT INTO users (name, email, password, is_verified, verification_token, token_expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, is_verified, created_at",
-      [name, email, hashedPassword, false, verificationToken, tokenExpiresAt]
+      `INSERT INTO users (
+        name, 
+        email, 
+        password, 
+        phone, 
+        gender, 
+        kelas, 
+        peminatan, 
+        school, 
+        is_verified, 
+        verification_token, 
+        token_expires_at,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+       RETURNING id, name, email, phone, gender, kelas, peminatan, school, is_verified, created_at`,
+      [
+        name.trim(),
+        email.toLowerCase().trim(),
+        hashedPassword,
+        phone || null,
+        gender || null,
+        kelas || null,
+        peminatan || null,
+        school || null,
+        false,
+        verificationToken,
+        tokenExpiresAt
+      ]
     );
 
     // Send verification email
     const emailSent = await sendVerificationEmail(
-      email,
+      email.toLowerCase().trim(),
       verificationToken,
-      name
+      name.trim()
     );
 
     if (!emailSent) {
-      console.error("Failed to send verification email");
-      // Continue even if email fails - user can request resend later
+      console.error("Failed to send verification email to:", email);
     }
 
     res.status(201).json({
+      success: true,
       message: "Registrasi berhasil! Silakan cek email Anda untuk verifikasi.",
-      email: email,
+      email: email.toLowerCase().trim(),
       userId: newUser.rows[0].id,
     });
   } catch (err) {
     console.error("Register error:", err);
-    res.status(500).json({ message: "Server error" });
+    
+    // Handle specific PostgreSQL errors
+    if (err.code === '23505') {
+      return res.status(400).json({ message: "Email sudah terdaftar" });
+    }
+    
+    if (err.code === '22P02') {
+      return res.status(400).json({ message: "Data yang dimasukkan tidak valid" });
+    }
+    
+    res.status(500).json({ message: "Terjadi kesalahan server. Silakan coba lagi." });
   }
 });
 
@@ -97,7 +163,7 @@ router.get("/verify-email/:token", async (req, res) => {
 
     // Update user as verified
     await db.query(
-      "UPDATE users SET is_verified = TRUE, verification_token = NULL, token_expires_at = NULL WHERE id = $1",
+      "UPDATE users SET is_verified = TRUE, verification_token = NULL, token_expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1",
       [userData.id]
     );
 
@@ -118,6 +184,11 @@ router.get("/verify-email/:token", async (req, res) => {
         id: userData.id,
         name: userData.name,
         email: userData.email,
+        phone: userData.phone,
+        gender: userData.gender,
+        kelas: userData.kelas,
+        peminatan: userData.peminatan,
+        school: userData.school,
         is_verified: true,
       },
     });
@@ -137,7 +208,7 @@ router.post("/resend-verification", async (req, res) => {
 
   try {
     const user = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
+      email.toLowerCase(),
     ]);
 
     if (user.rows.length === 0) {
@@ -156,7 +227,7 @@ router.post("/resend-verification", async (req, res) => {
 
     // Update token
     await db.query(
-      "UPDATE users SET verification_token = $1, token_expires_at = $2 WHERE id = $3",
+      "UPDATE users SET verification_token = $1, token_expires_at = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3",
       [verificationToken, tokenExpiresAt, userData.id]
     );
 
@@ -190,7 +261,7 @@ router.post("/login", async (req, res) => {
   try {
     // Check if user exists
     const user = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
+      email.toLowerCase(),
     ]);
 
     if (user.rows.length === 0) {
@@ -224,15 +295,91 @@ router.post("/login", async (req, res) => {
     );
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = userData;
+    const {
+      password: _,
+      verification_token: __,
+      token_expires_at: ___,
+      reset_password_token: ____,
+      reset_password_expires_at: _____,
+      ...userWithoutSensitiveData
+    } = userData;
 
     res.json({
       message: "Login berhasil",
       token,
-      user: userWithoutPassword,
+      user: userWithoutSensitiveData,
     });
   } catch (err) {
     console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Forgot Password
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email diperlukan" });
+
+  try {
+    const user = await db.query("SELECT * FROM users WHERE email = $1", [
+      email.toLowerCase(),
+    ]);
+
+    // Always return same message for security
+    if (user.rows.length === 0) {
+      return res.json({
+        message: "Jika email terdaftar, link reset telah dikirim",
+      });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await db.query(
+      "UPDATE users SET reset_password_token = $1, reset_password_expires_at = $2, updated_at = CURRENT_TIMESTAMP WHERE email = $3",
+      [token, expiresAt, email.toLowerCase()]
+    );
+
+    await sendResetPasswordEmail(email, token, user.rows[0].name);
+
+    res.json({ message: "Jika email terdaftar, link reset telah dikirim" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Reset Password
+router.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+
+  if (!token || !password)
+    return res.status(400).json({ message: "Token & password diperlukan" });
+
+  if (password.length < 8)
+    return res.status(400).json({ message: "Password minimal 8 karakter" });
+
+  try {
+    const user = await db.query(
+      "SELECT * FROM users WHERE reset_password_token = $1 AND reset_password_expires_at > NOW()",
+      [token]
+    );
+
+    if (user.rows.length === 0)
+      return res
+        .status(400)
+        .json({ message: "Token tidak valid atau sudah kadaluarsa" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.query(
+      "UPDATE users SET password = $1, reset_password_token = NULL, reset_password_expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [hashedPassword, user.rows[0].id]
+    );
+
+    res.json({ message: "Password berhasil direset. Silakan login." });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

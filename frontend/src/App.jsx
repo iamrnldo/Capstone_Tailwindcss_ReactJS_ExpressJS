@@ -9,6 +9,9 @@ import VerificationPending from "@/pages/VerificationPending";
 import Dashboard from "@/pages/dashboard";
 import Profile from "@/pages/profile";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
+
 
 export default function App() {
   return (
@@ -24,6 +27,8 @@ export default function App() {
         }
       />
       <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/verification-pending" element={<VerificationPending />} />

@@ -6,9 +6,9 @@ import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 const loggedOutMenu = [
-  { name: "Beranda", hash: "#" },
+  { name: "Beranda", hash: "#beranda" },
   { name: "Fitur", hash: "#fitur" },
-  { name: "Testimoni", hash: "#testimoni" },
+  { name: "Tentang", hash: "#tentang" },
 ];
 
 const loggedInMenu = [
@@ -34,7 +34,7 @@ const Header = () => {
   // Active link berdasarkan hash + default Beranda
   useEffect(() => {
     const updateActive = () => {
-      setActiveLink(window.location.hash || "#");
+      setActiveLink(window.location.hash || "#beranda");
     };
     updateActive();
     window.addEventListener("hashchange", updateActive);
@@ -71,17 +71,17 @@ const Header = () => {
   const linkClasses = (hash) =>
     `text-lg font-bold transition-colors duration-300 ease-out ${
       activeLink === hash
-        ? "text-sky-900"
-        : "text-neutral-400 hover:text-sky-900"
+        ? "bg-gradient-to-r from-blue-700 to-purple-500 bg-clip-text text-transparent"
+        : "text-slate-900 hover:bg-gradient-to-r hover:from-blue-700 hover:to-purple-500 hover:bg-clip-text hover:text-transparent"
     }`;
 
   return (
-    <nav className="w-full bg-white shadow-lg sticky top-0 z-50">
+    <nav className="w-full bg-white/0 backdrop-blur-lg shadow-md fixed top-0 z-50 border-b border-white/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <a href="#">
+            <a href="#beranda">
               <img className="h-10 w-auto" src={logo1} alt="Logo" />
             </a>
           </div>
@@ -130,17 +130,17 @@ const Header = () => {
                   </svg>
                 </button>
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <div className="absolute right-0 mt-8 w-48 bg-white/30 backdrop-blur-2xl rounded-xl shadow-2xl py-2 z-10 border border-white/40">
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-800 hover:bg-white/40 transition-all duration-200 rounded-lg mx-1"
                       onClick={() => setIsDropdownOpen(false)}
                     >
-                      Setting
+                      Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-white/40 transition-all duration-200 rounded-lg mx-1"
                     >
                       Logout
                     </button>
@@ -197,7 +197,7 @@ const Header = () => {
             isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="flex flex-col items-center gap-4 py-4 bg-white shadow-lg border-t border-gray-200">
+          <div className="flex flex-col items-center gap-4 py-4 bg-white/0 backdrop-blur-lg shadow-lg border-t border-white/20">
             {menuItems.map((item, index) => (
               <a
                 key={item.name}
