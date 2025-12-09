@@ -44,6 +44,10 @@ app.use(
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
   })
 );
 app.use(passport.initialize());
@@ -70,42 +74,112 @@ function authenticateJWT(req, res, next) {
   });
 }
 
-// Google Auth Route
-app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+// ============================================
+// GOOGLE AUTH ROUTES - LOGIN
+// ============================================
+app.get("/auth/google/login", (req, res, next) => {
+  req.session.googleAuthIntent = 'login';
+  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+});
 
-// Callback Route - Fixed for instant dashboard access
+// ============================================
+// GOOGLE AUTH ROUTES - REGISTER
+// ============================================
+app.get("/auth/google/register", (req, res, next) => {
+  req.session.googleAuthIntent = 'register';
+  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+});
+
+// ============================================
+// GOOGLE AUTH CALLBACK - Handles both login and register
+// ============================================
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: `${process.env.FRONTEND_URL}/login` }),
+  passport.authenticate("google", { 
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed` 
+  }),
   (req, res) => {
+    const intent = req.session?.googleAuthIntent || 'login';
+    
+    // Clear the intent from session
+    if (req.session) {
+      delete req.session.googleAuthIntent;
+    }
+
+    // Handle error cases
+    if (req.user.error === 'not_registered') {
+      // User tried to login but doesn't have an account
+      const encodedEmail = encodeURIComponent(req.user.googleProfile.email);
+      const encodedName = encodeURIComponent(req.user.googleProfile.name);
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?google_error=not_registered&email=${encodedEmail}&name=${encodedName}`
+      );
+    }
+
+    if (req.user.error === 'already_registered') {
+      // User tried to register but already has an account
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/register?google_error=already_registered&token=${req.user.token}`
+      );
+    }
+
+    // Success - redirect to dashboard with token
     res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`);
+  }
+);
+
+// Legacy route - defaults to login behavior
+app.get(
+  "/auth/google",
+  (req, res, next) => {
+    req.session.googleAuthIntent = 'login';
+    passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
   }
 );
 
 // Protected Route (get user info from both tables)
 app.get("/api/user", authenticateJWT, async (req, res) => {
+  console.log("GET /api/user called");
+  console.log("User from JWT:", req.user);
+  
   try {
     let user;
 
-    // Try to find in regular users table first
-    user = await db.query(
-      "SELECT id, name, email, picture, created_at FROM users WHERE id = $1",
-      [req.user.id]
-    );
-
-    // If not found, try google_users table
-    if (user.rows.length === 0) {
+    // Check user type from JWT
+    if (req.user.type === 'google') {
+      console.log("Looking in google_users table...");
       user = await db.query("SELECT * FROM google_users WHERE id = $1", [
         req.user.id,
       ]);
+    } else {
+      console.log("Looking in users table...");
+      user = await db.query(
+        "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at FROM users WHERE id = $1",
+        [req.user.id]
+      );
+    }
+
+    // Fallback: try both tables if not found
+    if (user.rows.length === 0) {
+      console.log("User not found in primary table, trying other...");
+      user = await db.query(
+        "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at FROM users WHERE id = $1",
+        [req.user.id]
+      );
+      
+      if (user.rows.length === 0) {
+        user = await db.query("SELECT * FROM google_users WHERE id = $1", [
+          req.user.id,
+        ]);
+      }
     }
 
     if (user.rows.length === 0) {
+      console.log("User not found in any table");
       return res.status(404).json({ message: "User not found" });
     }
+    
+    console.log("User found:", user.rows[0]);
     res.json(user.rows[0]);
   } catch (err) {
     console.error("Get user error:", err);
@@ -117,7 +191,7 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
 app.use("/api/profile", profileRouter);
 app.use("/api/auth", authRouter);
 
-// Legacy endpoints (optional - can be removed if using profile router)
+// Legacy endpoints
 app.put("/api/update-name", authenticateJWT, async (req, res) => {
   const { name } = req.body;
   if (!name) {

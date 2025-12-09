@@ -1,6 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, useContext } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import GoogleAuthModal from "../../components/GoogleAuthModal";
 import Register from "@/assets/hero/login2.png";
 import logo2 from "@/assets/logo/logo2.png";
 import google from "@/assets/element/google.svg";
@@ -17,130 +18,127 @@ import IconEyeClosed from "@/assets/element/tutup_mata.svg";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Reusable Input Component
-  const InputField = ({
-    icon,
-    type = "text",
-    id,
-    name,
-    placeholder,
-    value,
-    onChange,
-    required = false,
-    minLength,
-  }) => (
-    <div className="relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
-        <img src={icon} alt="" className="w-full h-full" aria-hidden="true" />
-      </span>
-      <input
-        type={type}
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required={required}
-        minLength={minLength}
-        className="w-full h-12 pl-11 pr-4 bg-white rounded-xl border border-neutral-400 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] transition-colors"
-      />
-    </div>
-  );
+const InputField = ({
+  icon,
+  type = "text",
+  id,
+  name,
+  placeholder,
+  value,
+  onChange,
+  required = false,
+  minLength,
+}) => (
+  <div className="relative">
+    <span className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
+      <img src={icon} alt="" className="w-full h-full" aria-hidden="true" />
+    </span>
+    <input
+      type={type}
+      id={id}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required={required}
+      minLength={minLength}
+      className="w-full h-12 pl-11 pr-4 bg-white rounded-xl border border-neutral-400 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] transition-colors"
+    />
+  </div>
+);
 
-  // Reusable Select Component
-  const SelectField = ({
-    id,
-    name,
-    value,
-    onChange,
-    placeholder,
-    options,
-    required = false,
-  }) => (
-    <div className="relative">
-      <select
-        id={id}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        className={`w-full h-12 px-4 pr-10 bg-white rounded-xl border border-neutral-400 text-sm focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] appearance-none cursor-pointer transition-colors ${
-          value ? "text-black" : "text-neutral-400"
-        }`}
-      >
-        <option value="" disabled>
-          {placeholder}
+// Reusable Select Component
+const SelectField = ({
+  id,
+  name,
+  value,
+  onChange,
+  placeholder,
+  options,
+  required = false,
+}) => (
+  <div className="relative">
+    <select
+      id={id}
+      name={name}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className={`w-full h-12 px-4 pr-10 bg-white rounded-xl border border-neutral-400 text-sm focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] appearance-none cursor-pointer transition-colors ${
+        value ? "text-black" : "text-neutral-400"
+      }`}
+    >
+      <option value="" disabled>
+        {placeholder}
+      </option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value} className="text-black">
+          {option.label}
         </option>
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-            className="text-black"
-          >
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <span className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none">
-        <img
-          src={IconDropdown}
-          alt=""
-          className="w-full h-full"
-          aria-hidden="true"
-        />
-      </span>
-    </div>
-  );
-
-  // Password Input Component
-  const PasswordField = ({
-    id,
-    name,
-    placeholder,
-    value,
-    onChange,
-    show,
-    onToggle,
-    minLength,
-  }) => (
-    <div className="relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
-        <img
-          src={IconPassword}
-          alt=""
-          className="w-full h-full"
-          aria-hidden="true"
-        />
-      </span>
-      <input
-        type={show ? "text" : "password"}
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required
-        minLength={minLength}
-        className="w-full h-12 pl-11 pr-12 bg-white rounded-xl border border-neutral-400 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] transition-colors"
+      ))}
+    </select>
+    <span className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none">
+      <img
+        src={IconDropdown}
+        alt=""
+        className="w-full h-full"
+        aria-hidden="true"
       />
-      <button
-        type="button"
-        onClick={onToggle}
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#012f72] rounded"
-        aria-label="Toggle password visibility"
-      >
-        <img
-          src={show ? IconEyeOpen : IconEyeClosed}
-          alt=""
-          className="w-5 h-5"
-          aria-hidden="true"
-        />
-      </button>
-    </div>
-  );
+    </span>
+  </div>
+);
+
+// Password Input Component
+const PasswordField = ({
+  id,
+  name,
+  placeholder,
+  value,
+  onChange,
+  show,
+  onToggle,
+  minLength,
+}) => (
+  <div className="relative">
+    <span className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
+      <img
+        src={IconPassword}
+        alt=""
+        className="w-full h-full"
+        aria-hidden="true"
+      />
+    </span>
+    <input
+      type={show ? "text" : "password"}
+      id={id}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required
+      minLength={minLength}
+      className="w-full h-12 pl-11 pr-12 bg-white rounded-xl border border-neutral-400 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#012f72] focus:ring-1 focus:ring-[#012f72] transition-colors"
+    />
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#012f72] rounded"
+      aria-label="Toggle password visibility"
+    >
+      <img
+        src={show ? IconEyeOpen : IconEyeClosed}
+        alt=""
+        className="w-5 h-5"
+        aria-hidden="true"
+      />
+    </button>
+  </div>
+);
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register } = useContext(AuthContext);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { register, loginWithToken } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -160,12 +158,28 @@ const RegisterPage = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Modal state for Google auth
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleToken, setGoogleToken] = useState("");
+
+  // Check for Google auth errors in URL
+  useEffect(() => {
+    const googleError = searchParams.get("google_error");
+    const token = searchParams.get("token");
+
+    if (googleError === "already_registered" && token) {
+      setGoogleToken(token);
+      setShowGoogleModal(true);
+      // Clean up URL
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Clear error when user types
     if (error) setError(null);
   };
 
@@ -245,13 +259,43 @@ const RegisterPage = () => {
   };
 
   const handleGoogleRegister = () => {
-    window.location.href = `${API_URL}/auth/google`;
+    window.location.href = `${API_URL}/auth/google/register`;
   };
 
-  
+  // Handle modal confirm - login with existing Google account
+  const handleModalConfirm = () => {
+    setShowGoogleModal(false);
+    if (googleToken && loginWithToken) {
+      // Use the token to login directly
+      loginWithToken(googleToken);
+      navigate("/dashboard");
+    } else {
+      // Fallback: redirect to Google login
+      window.location.href = `${API_URL}/auth/google/login`;
+    }
+  };
+
+  // Handle modal cancel - stay on register page
+  const handleModalCancel = () => {
+    setShowGoogleModal(false);
+    setGoogleToken("");
+  };
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Google Auth Modal */}
+      <GoogleAuthModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        type="info"
+        title="Akun Sudah Terdaftar"
+        message="Akun Google ini sudah terdaftar sebelumnya. Apakah Anda ingin login dengan akun Google ini?"
+        confirmText="Ya, Login Sekarang"
+        cancelText="Tidak, Kembali"
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
+
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         {/* Left Section - Form */}
         <div className="px-6 sm:px-8 md:px-12 lg:px-16 py-8 overflow-y-auto">

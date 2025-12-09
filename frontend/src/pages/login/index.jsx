@@ -1,6 +1,12 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, useContext } from "react";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
+import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import GoogleAuthModal from "../../components/GoogleAuthModal";
 import login2 from "@/assets/hero/login2.png";
 import logo2 from "@/assets/logo/logo2.png";
 import google from "@/assets/element/google.svg";
@@ -13,7 +19,9 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { login, user, loading } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -22,7 +30,41 @@ const LoginPage = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Modal state for Google auth errors
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleUserEmail, setGoogleUserEmail] = useState("");
+  const [, setGoogleUserName] = useState("");
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      const from = location.state?.from?.pathname || "/dashboard";
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, navigate, location]);
+
+  // Check for Google auth errors in URL
+  useEffect(() => {
+    const googleError = searchParams.get("google_error");
+    const email = searchParams.get("email");
+    const name = searchParams.get("name");
+    const generalError = searchParams.get("error");
+
+    if (googleError === "not_registered") {
+      setGoogleUserEmail(decodeURIComponent(email || ""));
+      setGoogleUserName(decodeURIComponent(name || ""));
+      setShowGoogleModal(true);
+      // Clean up URL
+      setSearchParams({});
+    }
+
+    if (generalError === "google_auth_failed") {
+      setError("Autentikasi Google gagal. Silakan coba lagi.");
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleChange = (e) => {
     setFormData({
@@ -41,13 +83,15 @@ const LoginPage = () => {
       return;
     }
 
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
-        navigate("/dashboard");
+        // Redirect to dashboard or previous page
+        const from = location.state?.from?.pathname || "/dashboard";
+        navigate(from, { replace: true });
       } else if (result.needsVerification) {
         navigate("/verification-pending", {
           state: { email: result.email },
@@ -59,16 +103,56 @@ const LoginPage = () => {
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`;
+    window.location.href = `${API_URL}/auth/google/login`;
   };
+
+  // Handle modal confirm - redirect to register with Google
+  const handleModalConfirm = () => {
+    setShowGoogleModal(false);
+    window.location.href = `${API_URL}/auth/google/register`;
+  };
+
+  // Handle modal cancel - stay on login page
+  const handleModalCancel = () => {
+    setShowGoogleModal(false);
+  };
+
+  // Show loading if checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#012f72]"></div>
+      </div>
+    );
+  }
+
+  // Don't render if already logged in (will redirect)
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Google Auth Modal */}
+      <GoogleAuthModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        type="warning"
+        title="Akun Tidak Ditemukan"
+        message={`Akun Google${
+          googleUserEmail ? ` (${googleUserEmail})` : ""
+        } belum terdaftar. Apakah Anda ingin mendaftar dengan akun Google ini?`}
+        confirmText="Ya, Daftar Sekarang"
+        cancelText="Tidak, Kembali"
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
+
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         {/* Left Section - Form */}
         <div className="px-6 sm:px-8 md:px-12 lg:px-16 py-8 flex flex-col justify-center">
@@ -167,10 +251,10 @@ const LoginPage = () => {
             <div className="space-y-4 pt-2">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isSubmitting}
                 className="w-full h-12 bg-[#012f72] text-white text-base font-semibold rounded-full hover:bg-[#012559] focus:outline-none focus:ring-2 focus:ring-[#012f72] focus:ring-offset-2 transition-colors disabled:bg-[#012f72]/60 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {loading ? (
+                {isSubmitting ? (
                   <>
                     <svg
                       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"

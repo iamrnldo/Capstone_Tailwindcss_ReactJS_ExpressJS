@@ -1,7 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { createContext, useState, useEffect, useCallback } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -9,134 +6,171 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [initialLoad, setInitialLoad] = useState(true);
 
+  // Fetch user data on initial load only
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchUser(token);
-    } else {
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem("token");
+
+      if (storedToken) {
+        try {
+          const response = await fetch(`${API_URL}/api/user`, {
+            headers: {
+              Authorization: `Bearer ${storedToken}`,
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+            setToken(storedToken);
+          } else {
+            // Token is invalid
+            localStorage.removeItem("token");
+            setToken(null);
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user:", error);
+          localStorage.removeItem("token");
+          setToken(null);
+          setUser(null);
+        }
+      }
+
       setLoading(false);
-    }
+      setInitialLoad(false);
+    };
 
-    // Handle token from redirect (e.g., after Google auth)
-    const query = new URLSearchParams(location.search);
-    const redirectToken = query.get("token");
-    if (redirectToken) {
-      localStorage.setItem("token", redirectToken);
-      fetchUser(redirectToken);
-      // Clean URL
-      navigate("/dashboard", { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location]);
+    initializeAuth();
+  }, []); // Empty dependency - runs only once
 
-  const fetchUser = async (token) => {
-    try {
-      setError(null);
-      const res = await axios.get(`${API_URL}/api/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser(res.data);
-    } catch (err) {
-      console.error("Failed to fetch user:", err);
-      setError("Failed to load user data. Please try logging in again.");
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Register function
-  const register = async (userData) => {
-    try {
-      const res = await axios.post(`${API_URL}/api/auth/register`, userData);
-      return {
-        success: true,
-        data: res.data,
-        message: res.data.message,
-      };
-    } catch (err) {
-      console.error("Registration error:", err);
-      return {
-        success: false,
-        error:
-          err.response?.data?.message || "Registrasi gagal. Silakan coba lagi.",
-      };
-    }
-  };
-
-  // Login function
+  // Login with email/password
   const login = async (email, password) => {
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        setUser(res.data.user);
-        return { success: true, user: res.data.user };
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return { success: true };
+      } else {
+        if (data.needsVerification) {
+          return {
+            success: false,
+            needsVerification: true,
+            email: data.email,
+            error: data.message,
+          };
+        }
+        return { success: false, error: data.message };
       }
-
-      return { success: false, error: "Login gagal" };
-    } catch (err) {
-      console.error("Login error:", err);
-
-      // Handle unverified email
-      if (err.response?.data?.needsVerification) {
-        return {
-          success: false,
-          needsVerification: true,
-          email: err.response.data.email,
-          error: err.response.data.message,
-        };
-      }
-
-      return {
-        success: false,
-        error: err.response?.data?.message || "Login gagal. Silakan coba lagi.",
-      };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, error: "Terjadi kesalahan. Silakan coba lagi." };
     }
   };
 
-  const logout = async () => {
+  // Login with token (for Google OAuth) - MEMOIZED
+  const loginWithToken = useCallback(async (newToken) => {
+    console.log(
+      "loginWithToken called with:",
+      newToken?.substring(0, 20) + "..."
+    );
+
     try {
-      await axios.get(`${API_URL}/logout`);
-    } catch (err) {
-      console.error("Logout failed:", err);
+      setLoading(true);
+
+      const response = await fetch(`${API_URL}/api/user`, {
+        headers: {
+          Authorization: `Bearer ${newToken}`,
+        },
+      });
+
+      console.log("API response status:", response.status);
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log("User data received:", userData);
+
+        localStorage.setItem("token", newToken);
+        setToken(newToken);
+        setUser(userData);
+        setLoading(false);
+        return { success: true, user: userData };
+      } else {
+        console.error("API response not ok");
+        localStorage.removeItem("token");
+        setToken(null);
+        setUser(null);
+        setLoading(false);
+        return { success: false, error: "Token tidak valid" };
+      }
+    } catch (error) {
+      console.error("Login with token error:", error);
+      localStorage.removeItem("token");
+      setToken(null);
+      setUser(null);
+      setLoading(false);
+      return { success: false, error: "Terjadi kesalahan" };
     }
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/login");
+  }, []); // No dependencies - stable function
+
+  // Register new user
+  const register = async (userData) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, email: data.email };
+      } else {
+        return { success: false, error: data.message };
+      }
+    } catch (error) {
+      console.error("Register error:", error);
+      return { success: false, error: "Terjadi kesalahan. Silakan coba lagi." };
+    }
   };
 
-  // Axios interceptor for JWT
-  axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
+  // Logout
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        loading,
-        error,
-        register,
-        login,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    token,
+    loading,
+    initialLoad,
+    isAuthenticated: !!user && !!token,
+    login,
+    loginWithToken,
+    register,
+    logout,
+    setUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
