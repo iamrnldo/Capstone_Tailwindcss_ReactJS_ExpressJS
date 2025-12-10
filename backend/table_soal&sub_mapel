@@ -1,0 +1,166 @@
+-- ============================================
+-- Create ENUM for mapel category (if not exists)
+-- ============================================
+DO $$ BEGIN
+    CREATE TYPE mapel_category_enum AS ENUM ('ipa', 'ips', 'bahasa', 'umum');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- ============================================
+-- Table: jenis_mapel
+-- ============================================
+CREATE TABLE IF NOT EXISTS jenis_mapel (
+    id_mapel SERIAL PRIMARY KEY,
+    nama VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    deskripsi TEXT,
+    icon VARCHAR(255),
+    category mapel_category_enum DEFAULT 'umum',
+    color VARCHAR(20) DEFAULT '#012f72',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for jenis_mapel
+CREATE INDEX IF NOT EXISTS idx_jenis_mapel_slug ON jenis_mapel(slug);
+CREATE INDEX IF NOT EXISTS idx_jenis_mapel_category ON jenis_mapel(category);
+CREATE INDEX IF NOT EXISTS idx_jenis_mapel_is_active ON jenis_mapel(is_active);
+
+-- ============================================
+-- Table: sub_bab_mapel
+-- ============================================
+CREATE TABLE IF NOT EXISTS sub_bab_mapel (
+    id_sub_bab SERIAL PRIMARY KEY,
+    id_mapel INT NOT NULL,
+    nama_sub_bab VARCHAR(200) NOT NULL,
+    kode_sub_bab VARCHAR(50) UNIQUE NOT NULL,
+    bab_utama VARCHAR(200),
+    urutan INT,
+    deskripsi TEXT,
+    tujuan VARCHAR(255),
+    contoh VARCHAR(255),
+    materi TEXT,
+    video VARCHAR(255),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_mapel) REFERENCES jenis_mapel(id_mapel) ON DELETE CASCADE
+);
+
+-- Create indexes for sub_bab_mapel
+CREATE INDEX IF NOT EXISTS idx_sub_bab_mapel_id_mapel ON sub_bab_mapel(id_mapel);
+CREATE INDEX IF NOT EXISTS idx_sub_bab_mapel_bab_utama ON sub_bab_mapel(bab_utama);
+
+-- ============================================
+-- Table: soal
+-- ============================================
+CREATE TABLE IF NOT EXISTS soal (
+    id_soal SERIAL PRIMARY KEY,
+    id_sub_bab INT NOT NULL,
+    kode_soal VARCHAR(50) UNIQUE NOT NULL,
+    tipe_soal VARCHAR(20) NOT NULL CHECK (tipe_soal IN ('pilihan_ganda', 'essay', 'benar_salah', 'menjodohkan', 'isian_singkat')),
+    pertanyaan TEXT NOT NULL,
+    pilihan_a TEXT,
+    pilihan_b TEXT,
+    pilihan_c TEXT,
+    pilihan_d TEXT,
+    pilihan_e TEXT,
+    jawaban_benar VARCHAR(10),
+    pembahasan TEXT,
+    bobot_nilai INT DEFAULT 1,
+    waktu_pengerjaan INT,
+    gambar_soal VARCHAR(255),
+    created_by INT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_sub_bab) REFERENCES sub_bab_mapel(id_sub_bab) ON DELETE CASCADE
+);
+
+-- Create indexes for soal
+CREATE INDEX IF NOT EXISTS idx_soal_id_sub_bab ON soal(id_sub_bab);
+CREATE INDEX IF NOT EXISTS idx_soal_tipe_soal ON soal(tipe_soal);
+
+-- ============================================
+-- Function untuk auto update updated_at
+-- ============================================
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
+-- Triggers untuk auto update updated_at
+-- ============================================
+DROP TRIGGER IF EXISTS update_jenis_mapel_updated_at ON jenis_mapel;
+CREATE TRIGGER update_jenis_mapel_updated_at
+BEFORE UPDATE ON jenis_mapel
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_sub_bab_mapel_updated_at ON sub_bab_mapel;
+CREATE TRIGGER update_sub_bab_mapel_updated_at
+BEFORE UPDATE ON sub_bab_mapel
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_soal_updated_at ON soal;
+CREATE TRIGGER update_soal_updated_at
+BEFORE UPDATE ON soal
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- Insert data jenis_mapel
+-- ============================================
+INSERT INTO jenis_mapel (nama, slug, deskripsi, icon, category, color) VALUES
+('Matematika Peminatan', 'matematika-peminatan', 'Matematika untuk program IPA dengan materi lebih mendalam', 'Matematika Peminatan.svg', 'ipa', '#8B5CF6'),
+('Matematika Wajib', 'matematika-wajib', 'Matematika dasar yang wajib untuk semua siswa', 'Matematika Wajib.svg', 'umum', '#3B82F6'),
+('Bahasa Inggris', 'bahasa-inggris', 'Pelajaran bahasa Inggris untuk komunikasi internasional', 'binggris.svg', 'bahasa', '#EC4899'),
+('Bahasa Indonesia', 'bahasa-indonesia', 'Pelajaran bahasa dan sastra Indonesia', 'Bahasa Indonesia.svg', 'bahasa', '#F97316'),
+('Fisika', 'fisika', 'Ilmu yang mempelajari materi, energi, dan interaksinya', 'Fisika.svg', 'ipa', '#F59E0B'),
+('Kimia', 'kimia', 'Ilmu yang mempelajari komposisi, struktur, dan sifat zat', 'Kimia.svg', 'ipa', '#10B981'),
+('Biologi', 'biologi', 'Ilmu yang mempelajari makhluk hidup dan kehidupan', 'Biologi.svg', 'ipa', '#22C55E')
+ON CONFLICT (slug) DO UPDATE SET
+    icon = EXCLUDED.icon,
+    color = EXCLUDED.color,
+    deskripsi = EXCLUDED.deskripsi,
+    category = EXCLUDED.category;
+
+-- ============================================
+-- Insert data sub_bab_mapel
+-- ============================================
+INSERT INTO sub_bab_mapel (id_mapel, nama_sub_bab, kode_sub_bab, bab_utama, urutan, deskripsi, tujuan, contoh, materi, video) VALUES
+(2, 'Persamaan Linear', 'MTK-PL01', 'Aljabar', 1, 'Materi tentang persamaan linear satu variabel', 'Siswa mampu menyelesaikan persamaan linear satu variabel', 'persamaan_linear_contoh.jpg', 'Persamaan linear adalah persamaan yang variabelnya berpangkat satu...', 'https://youtube.com/watch?v=example1'),
+(2, 'Fungsi Kuadrat', 'MTK-FK01', 'Aljabar', 2, 'Materi tentang fungsi dan persamaan kuadrat', 'Siswa mampu memahami konsep fungsi kuadrat', 'fungsi_kuadrat_contoh.jpg', 'Fungsi kuadrat adalah fungsi yang bentuk umumnya f(x) = ax² + bx + c...', 'https://youtube.com/watch?v=example2'),
+(1, 'Trigonometri Lanjut', 'MTKP-TL01', 'Trigonometri', 1, 'Pengenalan trigonometri lanjutan untuk IPA', 'Siswa mampu memahami konsep trigonometri lanjut', 'trigonometri_lanjut_contoh.jpg', 'Trigonometri lanjut mempelajari identitas dan persamaan trigonometri...', 'https://youtube.com/watch?v=example3'),
+(4, 'Struktur Teks', 'BIND-ST01', 'Teks', 1, 'Mempelajari berbagai struktur teks', 'Siswa mampu mengidentifikasi struktur berbagai jenis teks', 'struktur_teks_contoh.jpg', 'Setiap jenis teks memiliki struktur yang berbeda-beda...', 'https://youtube.com/watch?v=example4'),
+(5, 'Gerak Lurus', 'FIS-GL01', 'Mekanika', 1, 'Mempelajari gerak lurus beraturan dan berubah beraturan', 'Siswa mampu menganalisis gerak lurus', 'gerak_lurus_contoh.jpg', 'Gerak lurus adalah gerak benda pada lintasan garis lurus...', 'https://youtube.com/watch?v=example5');
+
+-- ============================================
+-- Insert data soal
+-- ============================================
+INSERT INTO soal (id_sub_bab, kode_soal, tipe_soal, pertanyaan, pilihan_a, pilihan_b, pilihan_c, pilihan_d, pilihan_e, jawaban_benar, pembahasan, bobot_nilai) VALUES
+(1, 'MTK-PL01-001', 'pilihan_ganda', 
+'Tentukan nilai x dari persamaan 2x + 5 = 13', 
+'x = 2', 'x = 3', 'x = 4', 'x = 5', 'x = 6',
+'C', 
+'2x + 5 = 13, maka 2x = 13 - 5 = 8, sehingga x = 8/2 = 4', 
+10),
+
+(2, 'MTK-FK01-001', 'pilihan_ganda',
+'Tentukan nilai diskriminan dari persamaan kuadrat x² - 5x + 6 = 0',
+'D = 1', 'D = 2', 'D = 3', 'D = 4', 'D = 5',
+'A',
+'Diskriminan D = b² - 4ac = (-5)² - 4(1)(6) = 25 - 24 = 1',
+10),
+
+(4, 'BIND-ST01-001', 'essay',
+'Jelaskan perbedaan antara teks eksposisi dan teks argumentasi!',
+NULL, NULL, NULL, NULL, NULL,
+NULL,
+'Teks eksposisi bertujuan menjelaskan informasi, sedangkan teks argumentasi bertujuan meyakinkan pembaca dengan argumen yang kuat.',
+20);

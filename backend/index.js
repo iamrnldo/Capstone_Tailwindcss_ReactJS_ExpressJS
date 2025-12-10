@@ -15,6 +15,7 @@ const app = express();
 // Import routers
 const profileRouter = require("./profile");
 const authRouter = require("./auth");
+const dashboardRouter = require("./dashboard"); // Add this
 
 // Body parsers
 app.use(express.json());
@@ -45,9 +46,9 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
   })
 );
 app.use(passport.initialize());
@@ -78,16 +79,24 @@ function authenticateJWT(req, res, next) {
 // GOOGLE AUTH ROUTES - LOGIN
 // ============================================
 app.get("/auth/google/login", (req, res, next) => {
-  req.session.googleAuthIntent = 'login';
-  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+  req.session.googleAuthIntent = "login";
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
 });
 
 // ============================================
 // GOOGLE AUTH ROUTES - REGISTER
 // ============================================
 app.get("/auth/google/register", (req, res, next) => {
-  req.session.googleAuthIntent = 'register';
-  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+  req.session.googleAuthIntent = "register";
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
 });
 
 // ============================================
@@ -95,20 +104,19 @@ app.get("/auth/google/register", (req, res, next) => {
 // ============================================
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { 
-    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed` 
+  passport.authenticate("google", {
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
   }),
   (req, res) => {
-    const intent = req.session?.googleAuthIntent || 'login';
-    
+    const intent = req.session?.googleAuthIntent || "login";
+
     // Clear the intent from session
     if (req.session) {
       delete req.session.googleAuthIntent;
     }
 
     // Handle error cases
-    if (req.user.error === 'not_registered') {
-      // User tried to login but doesn't have an account
+    if (req.user.error === "not_registered") {
       const encodedEmail = encodeURIComponent(req.user.googleProfile.email);
       const encodedName = encodeURIComponent(req.user.googleProfile.name);
       return res.redirect(
@@ -116,37 +124,38 @@ app.get(
       );
     }
 
-    if (req.user.error === 'already_registered') {
-      // User tried to register but already has an account
+    if (req.user.error === "already_registered") {
       return res.redirect(
         `${process.env.FRONTEND_URL}/register?google_error=already_registered&token=${req.user.token}`
       );
     }
 
     // Success - redirect to dashboard with token
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`
+    );
   }
 );
 
 // Legacy route - defaults to login behavior
-app.get(
-  "/auth/google",
-  (req, res, next) => {
-    req.session.googleAuthIntent = 'login';
-    passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
-  }
-);
+app.get("/auth/google", (req, res, next) => {
+  req.session.googleAuthIntent = "login";
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
+});
 
 // Protected Route (get user info from both tables)
 app.get("/api/user", authenticateJWT, async (req, res) => {
   console.log("GET /api/user called");
   console.log("User from JWT:", req.user);
-  
+
   try {
     let user;
 
-    // Check user type from JWT
-    if (req.user.type === 'google') {
+    if (req.user.type === "google") {
       console.log("Looking in google_users table...");
       user = await db.query("SELECT * FROM google_users WHERE id = $1", [
         req.user.id,
@@ -166,7 +175,7 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
         "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at FROM users WHERE id = $1",
         [req.user.id]
       );
-      
+
       if (user.rows.length === 0) {
         user = await db.query("SELECT * FROM google_users WHERE id = $1", [
           req.user.id,
@@ -178,7 +187,7 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
       console.log("User not found in any table");
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     console.log("User found:", user.rows[0]);
     res.json(user.rows[0]);
   } catch (err) {
@@ -187,9 +196,12 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
   }
 });
 
+// ============================================
 // Mount routers
+// ============================================
 app.use("/api/profile", profileRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/dashboard", dashboardRouter); // Add this
 
 // Legacy endpoints
 app.put("/api/update-name", authenticateJWT, async (req, res) => {
