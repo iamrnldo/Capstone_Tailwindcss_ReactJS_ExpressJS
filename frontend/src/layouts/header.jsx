@@ -1,47 +1,64 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+// frontend/src/components/Header.jsx
+
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom"; // Added import
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo1 from "@/assets/logo/logo1.png";
 import jet from "@/assets/element/jet.png";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 const loggedOutMenu = [
-  { name: "Beranda", hash: "#beranda" },
-  { name: "Fitur", hash: "#fitur" },
-  { name: "Tentang", hash: "#tentang" },
+  { name: "Beranda", path: "#beranda", type: "hash" },
+  { name: "Fitur", path: "#fitur", type: "hash" },
+  { name: "Tentang", path: "#tentang", type: "hash" },
 ];
 
 const loggedInMenu = [
-  { name: "Beranda", hash: "/dashboard" },
-  { name: "Kelas", hash: "#kelas" },
-  { name: "Try Out", hash: "#tryout" },
+  { name: "Beranda", path: "/dashboard", type: "route" },
+  { name: "Kelas", path: "/kelas", type: "route" },
+  { name: "Try Out", path: "/tryout", type: "route" },
 ];
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Added for dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("");
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
-  const dropdownRef = useRef(null); // Added for dropdown ref
+  const dropdownRef = useRef(null);
   const { user, logout } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = user ? loggedInMenu : loggedOutMenu;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
-  // Active link berdasarkan hash + default Beranda
+  // Active link based on current route or hash
   useEffect(() => {
-    const updateActive = () => {
+    if (user) {
+      // For logged in users, check pathname
+      setActiveLink(location.pathname);
+    } else {
+      // For logged out users, check hash
       setActiveLink(window.location.hash || "#beranda");
-    };
-    updateActive();
-    window.addEventListener("hashchange", updateActive);
-    return () => window.removeEventListener("hashchange", updateActive);
-  }, []);
+    }
+  }, [location.pathname, user]);
 
-  // Click outside untuk close mobile menu
+  // Listen for hash changes (for logged out menu)
+  useEffect(() => {
+    if (!user) {
+      const updateActive = () => {
+        setActiveLink(window.location.hash || "#beranda");
+      };
+      window.addEventListener("hashchange", updateActive);
+      return () => window.removeEventListener("hashchange", updateActive);
+    }
+  }, [user]);
+
+  // Click outside to close menus
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -52,7 +69,6 @@ const Header = () => {
       ) {
         setIsMenuOpen(false);
       }
-      // Close dropdown if click outside
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
@@ -65,15 +81,87 @@ const Header = () => {
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       logout();
+      navigate("/");
     }
   };
 
-  const linkClasses = (hash) =>
+  const isActive = (item) => {
+    if (item.type === "route") {
+      return location.pathname === item.path;
+    }
+    return activeLink === item.path;
+  };
+
+  const linkClasses = (item) =>
     `text-lg font-bold transition-colors duration-300 ease-out ${
-      activeLink === hash
+      isActive(item)
         ? "bg-gradient-to-r from-blue-700 to-purple-500 bg-clip-text text-transparent"
         : "text-slate-900 hover:bg-gradient-to-r hover:from-blue-700 hover:to-purple-500 hover:bg-clip-text hover:text-transparent"
     }`;
+
+  // Render menu item based on type (route or hash)
+  const renderMenuItem = (item, onClick = null) => {
+    if (item.type === "route") {
+      return (
+        <Link
+          key={item.name}
+          to={item.path}
+          className={linkClasses(item)}
+          onClick={onClick}
+        >
+          {item.name}
+        </Link>
+      );
+    }
+    return (
+      <a
+        key={item.name}
+        href={item.path}
+        className={linkClasses(item)}
+        onClick={onClick}
+      >
+        {item.name}
+      </a>
+    );
+  };
+
+  // Render mobile menu item with animation
+  const renderMobileMenuItem = (item, index) => {
+    const baseClasses = `${linkClasses(
+      item
+    )} transform transition-all duration-500 ease-[cubic-bezier(0.4,0.0,0.2,1)] ${
+      isMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+    }`;
+
+    const style = {
+      transitionDelay: isMenuOpen ? `${index * 50}ms` : "0ms",
+    };
+
+    if (item.type === "route") {
+      return (
+        <Link
+          key={item.name}
+          to={item.path}
+          onClick={toggleMenu}
+          className={baseClasses}
+          style={style}
+        >
+          {item.name}
+        </Link>
+      );
+    }
+    return (
+      <a
+        key={item.name}
+        href={item.path}
+        onClick={toggleMenu}
+        className={baseClasses}
+        style={style}
+      >
+        {item.name}
+      </a>
+    );
+  };
 
   return (
     <nav className="w-full bg-white/0 backdrop-blur-lg shadow-md fixed top-0 z-50 border-b border-white/20">
@@ -81,22 +169,20 @@ const Header = () => {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <a href="#beranda">
-              <img className="h-10 w-auto" src={logo1} alt="Logo" />
-            </a>
+            {user ? (
+              <Link to="/dashboard">
+                <img className="h-10 w-auto" src={logo1} alt="Logo" />
+              </Link>
+            ) : (
+              <a href="#beranda">
+                <img className="h-10 w-auto" src={logo1} alt="Logo" />
+              </a>
+            )}
           </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
-            {menuItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.hash}
-                className={linkClasses(item.hash)}
-              >
-                {item.name}
-              </a>
-            ))}
+            {menuItems.map((item) => renderMenuItem(item))}
           </div>
 
           {/* Get Started / Profile Dropdown + Hamburger */}
@@ -110,11 +196,13 @@ const Header = () => {
                   <img
                     src={user.picture}
                     alt="Profile"
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full object-cover"
                   />
-                  <span className="text-sky-900 font-medium">{user.name}</span>
+                  <span className="hidden sm:block text-sky-900 font-medium max-w-[120px] truncate">
+                    {user.name}
+                  </span>
                   <svg
-                    className={`w-4 h-4 transition-transform ${
+                    className={`w-4 h-4 transition-transform duration-300 ${
                       isDropdownOpen ? "rotate-180" : ""
                     }`}
                     fill="none"
@@ -129,23 +217,90 @@ const Header = () => {
                     />
                   </svg>
                 </button>
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-8 w-48 bg-white/30 backdrop-blur-2xl rounded-xl shadow-2xl py-2 z-10 border border-white/40">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-800 hover:bg-white/40 transition-all duration-200 rounded-lg mx-1"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Profile
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-white/40 transition-all duration-200 rounded-lg mx-1"
-                    >
-                      Logout
-                    </button>
+
+                {/* Dropdown Menu */}
+                <div
+                  className={`absolute right-0 mt-4 w-48 bg-white/90 backdrop-blur-2xl rounded-xl shadow-2xl py-2 z-10 border border-white/40 transition-all duration-300 ${
+                    isDropdownOpen
+                      ? "opacity-100 translate-y-0 visible"
+                      : "opacity-0 -translate-y-2 invisible"
+                  }`}
+                >
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
                   </div>
-                )}
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-all duration-200"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    Profile
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-all duration-200"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Settings
+                  </Link>
+                  <hr className="my-1 border-gray-100" />
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-all duration-200"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Logout
+                  </button>
+                </div>
               </div>
             ) : (
               <Link
@@ -163,6 +318,7 @@ const Header = () => {
               </Link>
             )}
 
+            {/* Hamburger Button */}
             <button
               ref={buttonRef}
               className="md:hidden text-sky-900 w-6 h-6 flex flex-col justify-center items-center focus:outline-none"
@@ -198,25 +354,7 @@ const Header = () => {
           }`}
         >
           <div className="flex flex-col items-center gap-4 py-4 bg-white/0 backdrop-blur-lg shadow-lg border-t border-white/20">
-            {menuItems.map((item, index) => (
-              <a
-                key={item.name}
-                href={item.hash}
-                onClick={toggleMenu}
-                className={`${linkClasses(
-                  item.hash
-                )} transform transition-all duration-500 ease-[cubic-bezier(0.4,0.0,0.2,1)] ${
-                  isMenuOpen
-                    ? "translate-y-0 opacity-100"
-                    : "-translate-y-4 opacity-0"
-                }`}
-                style={{
-                  transitionDelay: isMenuOpen ? `${index * 50}ms` : "0ms",
-                }}
-              >
-                {item.name}
-              </a>
-            ))}
+            {menuItems.map((item, index) => renderMobileMenuItem(item, index))}
           </div>
         </div>
       </div>

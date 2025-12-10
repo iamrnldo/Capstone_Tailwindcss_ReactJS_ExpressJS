@@ -16,12 +16,25 @@ import Profile from "@/pages/profile";
 import EditProfile from "@/pages/profile/edit"; // Add this import
 import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";
+import Kelas from "./pages/kelas";
+import TryOut from "./pages/tryout";
 
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
         {/* Public Routes */}
+        {/* Protected Routes */}
+        <Route
+          path="/kelas"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <Kelas />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/"
           element={

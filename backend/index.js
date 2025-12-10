@@ -225,6 +225,12 @@ app.put("/api/update-name", authenticateJWT, async (req, res) => {
   }
 });
 
+// Add to your imports
+const kelasRouter = require("./kelas");
+
+// Add to your route mounts (after other routers)
+app.use("/api/kelas", kelasRouter);
+
 app.post(
   "/api/upload-picture",
   authenticateJWT,
