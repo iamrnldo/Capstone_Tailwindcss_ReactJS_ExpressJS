@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useCallback } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
