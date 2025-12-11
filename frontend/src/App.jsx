@@ -19,6 +19,7 @@ import ResetPasswordPage from "@/pages/reset-password";
 import Kelas from "./pages/kelas";
 import TryoutPage from "./pages/tryout";
 import AboutUsPage from "./pages/about-us";
+import DetailMapelPage from "./pages/detail_mapel";
 
 export default function App() {
   return (
@@ -26,6 +27,16 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         {/* Protected Routes */}
+        <Route
+          path="/mapel/:subjectId"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <DetailMapelPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/about-us"
           element={

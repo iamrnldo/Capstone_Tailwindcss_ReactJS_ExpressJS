@@ -125,6 +125,11 @@ router.get("/mapel", async (req, res) => {
 // ============================================
 // GET /api/dashboard/mapel/:slug - Get Single Mata Pelajaran
 // ============================================
+// Handle mapel click - navigates to detail_mapel page
+const handleMapelClick = (slug) => {
+  navigate(`/mapel/${slug}`);
+};
+
 router.get("/mapel/:slug", async (req, res) => {
   try {
     const { slug } = req.params;

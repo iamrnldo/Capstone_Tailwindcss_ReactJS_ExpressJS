@@ -16,6 +16,7 @@ const app = express();
 const profileRouter = require("./profile");
 const authRouter = require("./auth");
 const dashboardRouter = require("./dashboard"); // Add this
+const detailMapelRouter = require("./detail_mapel"); 
 
 // Body parsers
 app.use(express.json());
@@ -147,6 +148,9 @@ app.get("/auth/google", (req, res, next) => {
   );
 });
 
+
+
+
 // Protected Route (get user info from both tables)
 app.get("/api/user", authenticateJWT, async (req, res) => {
   console.log("GET /api/user called");
@@ -202,6 +206,7 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
 app.use("/api/profile", profileRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter); // Add this
+app.use("/api/detail-mapel", detailMapelRouter); // Add this line
 
 // Legacy endpoints
 app.put("/api/update-name", authenticateJWT, async (req, res) => {
