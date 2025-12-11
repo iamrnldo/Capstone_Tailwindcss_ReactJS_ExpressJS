@@ -17,7 +17,8 @@ import EditProfile from "@/pages/profile/edit"; // Add this import
 import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";
 import Kelas from "./pages/kelas";
-import TryOut from "./pages/tryout";
+import TryoutPage from "./pages/tryout";
+import AboutUsPage from "./pages/about-us";
 
 export default function App() {
   return (
@@ -25,6 +26,26 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         {/* Protected Routes */}
+        <Route
+          path="/about-us"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <AboutUsPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tryout"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <TryoutPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/kelas"
           element={
