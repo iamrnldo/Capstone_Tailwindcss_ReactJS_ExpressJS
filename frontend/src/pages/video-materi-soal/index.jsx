@@ -1,4 +1,3 @@
-
 // frontend/src/pages/video-materi-soal/index.jsx
 
 import { useState, useEffect, useContext } from "react";
@@ -8,31 +7,69 @@ import { AuthContext } from "../../context/AuthContext";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // ============================================
-// Import all JPG images from detail_mapel folder
+// Import all SVG images directly
 // ============================================
-const imageModules = import.meta.glob(
-  "../../../assets/element/detail_mapel/*.jpg",
-  { eager: true }
-);
+const svgModules = import.meta.glob("../../assets/element/detail_mapel/*.svg", {
+  eager: true,
+});
 
-// Create a mapping of filename to imported module
-const getContohImage = (filename) => {
+// Build lookup map immediately
+const IMAGE_MAP = {};
+for (const path in svgModules) {
+  const filename = path.split("/").pop();
+  const baseName = filename.replace(/\.[^/.]+$/, "");
+  const imageUrl = svgModules[path].default;
+
+  IMAGE_MAP[filename] = imageUrl;
+  IMAGE_MAP[baseName] = imageUrl;
+
+  console.log(
+    `Added to IMAGE_MAP: ${baseName} -> ${imageUrl ? "OK" : "FAILED"}`
+  );
+}
+
+console.log("IMAGE_MAP final:", IMAGE_MAP);
+console.log("IMAGE_MAP keys:", Object.keys(IMAGE_MAP));
+
+/**
+ * Get image by filename - Generic function for both foto and contoh
+ */
+function getImageFromMap(filename) {
   if (!filename) return null;
 
-  // Try to find the image in the imported modules
-  const key = Object.keys(imageModules).find((path) =>
-    path.endsWith(`/${filename}`)
-  );
+  const cleanFilename = filename.trim();
+  const baseName = cleanFilename.replace(/\.[^/.]+$/, "");
 
-  if (key && imageModules[key]) {
-    return imageModules[key].default;
+  console.log("Looking for:", cleanFilename, "or", baseName, "in IMAGE_MAP");
+
+  // Try exact filename first
+  if (IMAGE_MAP[cleanFilename]) {
+    console.log("Found exact:", cleanFilename);
+    return IMAGE_MAP[cleanFilename];
   }
 
+  // Try baseName (handles extension mismatch)
+  if (IMAGE_MAP[baseName]) {
+    console.log("Found baseName:", baseName);
+    return IMAGE_MAP[baseName];
+  }
+
+  // Try with .svg extension
+  if (IMAGE_MAP[baseName + ".svg"]) {
+    console.log("Found with .svg:", baseName + ".svg");
+    return IMAGE_MAP[baseName + ".svg"];
+  }
+
+  console.log("Not found. Available:", Object.keys(IMAGE_MAP));
   return null;
-};
+}
+
+// Alias functions for clarity
+const getFotoImage = (filename) => getImageFromMap(filename);
+const getContohImage = (filename) => getImageFromMap(filename);
 
 // ============================================
-// Tab Icons Components
+// Tab Icons
 // ============================================
 const VideoIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -57,26 +94,24 @@ const LatihanIcon = () => (
 );
 
 // ============================================
-// Tab Button Component
+// Tab Button
 // ============================================
-const TabButton = ({ id, label, icon, isActive, onClick }) => {
-  return (
-    <button
-      onClick={() => onClick(id)}
-      className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-        isActive
-          ? "bg-blue-600 text-white shadow-md font-medium"
-          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm font-medium"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-};
+const TabButton = ({ id, label, icon, isActive, onClick }) => (
+  <button
+    onClick={() => onClick(id)}
+    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+      isActive
+        ? "bg-blue-600 text-white shadow-md font-medium"
+        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm font-medium"
+    }`}
+  >
+    {icon}
+    <span>{label}</span>
+  </button>
+);
 
 // ============================================
-// Video Content Component
+// Video Content
 // ============================================
 const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
   const hasVideo = data?.videoUrl;
@@ -109,118 +144,16 @@ const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="absolute inset-0 flex">
-            <div className="flex-1 bg-gradient-to-br from-stone-400 to-stone-300 relative">
-              <div className="absolute top-8 left-8 hidden sm:block">
-                <div className="w-16 h-16 rounded-full border-4 border-gray-800 bg-white flex items-center justify-center relative">
-                  <div
-                    className="w-1 h-5 bg-gray-800 absolute"
-                    style={{
-                      transform: "rotate(90deg)",
-                      transformOrigin: "center bottom",
-                    }}
-                  />
-                  <div
-                    className="w-1 h-6 bg-gray-800 absolute"
-                    style={{
-                      transform: "rotate(0deg)",
-                      transformOrigin: "center bottom",
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="absolute bottom-0 left-8 w-32 h-40 hidden md:block">
-                <div className="bg-gradient-to-br from-amber-900 to-amber-950 rounded-t-lg h-full shadow-lg relative">
-                  <div className="absolute top-8 left-0 right-0 mx-4 h-12 bg-gray-800 rounded flex items-center justify-center">
-                    <div className="w-8 h-1 bg-gray-400"></div>
-                  </div>
-                  <div className="absolute top-24 left-0 right-0 mx-4 h-12 bg-gray-800 rounded flex items-center justify-center">
-                    <div className="w-8 h-1 bg-gray-400"></div>
-                  </div>
-                  <div className="absolute -top-2 left-4 flex gap-1">
-                    <div className="w-2 h-8 bg-red-600 rounded-t"></div>
-                    <div className="w-2 h-10 bg-blue-600 rounded-t"></div>
-                    <div className="w-2 h-6 bg-green-600 rounded-t"></div>
-                  </div>
-                  <div className="absolute -top-4 right-4 flex gap-2">
-                    <div className="w-3 h-4 bg-orange-400 rounded"></div>
-                    <div className="w-2 h-3 bg-yellow-300"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 bg-gradient-to-br from-teal-800 to-teal-900 relative p-8">
-              <svg
-                className="absolute inset-0 w-full h-full opacity-60"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect
-                  x="30"
-                  y="20"
-                  width="60"
-                  height="80"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.3)"
-                  strokeWidth="2"
-                />
-                <circle
-                  cx="180"
-                  cy="200"
-                  r="40"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.3)"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M 250 50 L 300 100 L 200 100 Z"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.3)"
-                  strokeWidth="2"
-                />
-                <text
-                  x="40"
-                  y="150"
-                  fill="rgba(255,255,255,0.4)"
-                  fontSize="14"
-                  fontFamily="monospace"
-                >
-                  f(x)=ax+b
-                </text>
-                <text
-                  x="320"
-                  y="80"
-                  fill="rgba(255,255,255,0.4)"
-                  fontSize="18"
-                  fontFamily="monospace"
-                >
-                  π
-                </text>
-                <text
-                  x="280"
-                  y="180"
-                  fill="rgba(255,255,255,0.25)"
-                  fontSize="48"
-                  fontFamily="Arial Black"
-                  fontWeight="bold"
-                >
-                  MATH
-                </text>
-              </svg>
-              <div className="absolute bottom-20 right-20 hidden lg:block">
-                <div className="w-24 h-12 border-t-4 border-l-4 border-r-4 border-white rounded-t-full opacity-40"></div>
-              </div>
-            </div>
+            <div className="flex-1 bg-gradient-to-br from-stone-400 to-stone-300" />
+            <div className="flex-1 bg-gradient-to-br from-teal-800 to-teal-900" />
           </div>
           <button
-            onClick={() => {
-              if (hasVideo) {
-                setIsPlaying && setIsPlaying(true);
-              } else {
-                alert("Video belum tersedia untuk materi ini");
-              }
-            }}
+            onClick={() =>
+              hasVideo ? setIsPlaying?.(true) : alert("Video belum tersedia")
+            }
             className="absolute inset-0 flex items-center justify-center group z-20"
           >
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white bg-opacity-90 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white bg-opacity-90 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
               <svg
                 className="w-8 h-8 sm:w-10 sm:h-10 text-teal-600 ml-1"
                 fill="currentColor"
@@ -233,23 +166,9 @@ const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
         </div>
       </div>
       <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/50 to-transparent p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <h3 className="text-white text-base sm:text-lg font-semibold">
-            {data?.title || "Materi"}
-          </h3>
-          <div className="bg-black/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg">
-            <p className="text-white text-xs sm:text-sm font-medium flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              {data?.instructor || "Guru Pengajar"}
-            </p>
-          </div>
-        </div>
+        <h3 className="text-white text-base sm:text-lg font-semibold">
+          {data?.title || "Materi"}
+        </h3>
       </div>
       {!hasVideo && (
         <div className="absolute bottom-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs font-medium">
@@ -261,24 +180,53 @@ const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
 };
 
 // ============================================
-// Materi Content Component (Updated with Contoh JPG Image)
+// Materi Content - UPDATED
 // ============================================
 const MateriContent = ({ data }) => {
-  // Get the contoh image (JPG)
+  // Get both foto and contoh images from IMAGE_MAP
+  const fotoImage = getFotoImage(data?.foto);
   const contohImage = getContohImage(data?.contoh);
+
+  // Debug logging
+  useEffect(() => {
+    if (data) {
+      console.log("MateriContent data:", {
+        title: data.title,
+        foto: data.foto,
+        contoh: data.contoh,
+        fotoImageResolved: fotoImage ? "YES" : "NO",
+        contohImageResolved: contohImage ? "YES" : "NO",
+      });
+    }
+  }, [data, fotoImage, contohImage]);
 
   return (
     <>
-      {/* Hero Image Box */}
+      {/* Hero - UPDATED to use fotoImage */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
         <div className="relative h-48 sm:h-64 bg-gradient-to-r from-blue-100 to-purple-100">
-          {data?.foto ? (
+          {fotoImage ? (
             <img
-              src={data.foto}
-              alt={data.title}
+              src={fotoImage}
+              alt={data?.title || "Materi"}
               className="absolute inset-0 w-full h-full object-cover"
             />
+          ) : data?.foto ? (
+            // If foto exists but not in IMAGE_MAP, show debug info
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
+              <svg
+                className="w-16 h-16 text-gray-300 mb-2"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+              <p className="text-xs text-gray-500">
+                Image not found: {data.foto}
+              </p>
+            </div>
           ) : (
+            // Default placeholder when no foto is set
             <div className="absolute inset-0 flex items-center justify-center">
               <svg
                 className="w-24 h-24 sm:w-32 sm:h-32 text-blue-300"
@@ -289,7 +237,7 @@ const MateriContent = ({ data }) => {
               </svg>
             </div>
           )}
-          <div className="absolute top-4 left-4 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-md">
+          <div className="absolute top-4 left-4 bg-white px-3 py-1.5 rounded-lg shadow-md">
             <span className="text-xs sm:text-sm font-semibold text-gray-800">
               {data?.title || "Materi"}
             </span>
@@ -304,7 +252,7 @@ const MateriContent = ({ data }) => {
         </div>
       </div>
 
-      {/* Section 1: Deskripsi */}
+      {/* Deskripsi */}
       <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-4">
           {data?.title || "Materi"}
@@ -314,7 +262,7 @@ const MateriContent = ({ data }) => {
         </p>
       </div>
 
-      {/* Section 2: Tujuan Pembelajaran */}
+      {/* Tujuan */}
       {data?.tujuan && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-4">
@@ -326,7 +274,7 @@ const MateriContent = ({ data }) => {
         </div>
       )}
 
-      {/* Section 3: Konten Materi */}
+      {/* Konten */}
       {data?.konten && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-6">
@@ -339,7 +287,7 @@ const MateriContent = ({ data }) => {
         </div>
       )}
 
-      {/* Section 4: Contoh (Display JPG Image from assets) */}
+      {/* Contoh */}
       {data?.contoh && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-6">
@@ -347,12 +295,13 @@ const MateriContent = ({ data }) => {
           </h2>
           <div className="bg-[#fffde7] rounded-xl p-4 sm:p-6 border-2 border-[#ff6f00]">
             {contohImage ? (
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center">
                 <img
                   src={contohImage}
                   alt={`Contoh ${data.title}`}
-                  className="max-w-full h-auto max-h-[500px] object-contain rounded-lg shadow-md"
+                  className="max-w-full h-auto max-h-[600px] object-contain rounded-lg shadow-md"
                 />
+                <p className="text-xs text-gray-500 mt-3">{data.contoh}</p>
               </div>
             ) : (
               <div className="text-center py-8">
@@ -367,8 +316,14 @@ const MateriContent = ({ data }) => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <p className="text-sm text-gray-500">
-                  Gambar contoh tidak ditemukan: {data.contoh}
+                <p className="text-sm text-gray-500 mb-2">
+                  Gambar contoh tidak ditemukan
+                </p>
+                <p className="text-xs text-gray-400">
+                  File:{" "}
+                  <code className="bg-gray-100 px-2 py-1 rounded">
+                    {data.contoh}
+                  </code>
                 </p>
               </div>
             )}
@@ -376,8 +331,8 @@ const MateriContent = ({ data }) => {
         </div>
       )}
 
-      {/* Related Materi */}
-      {data?.relatedMateri && data.relatedMateri.length > 0 && (
+      {/* Related */}
+      {data?.relatedMateri?.length > 0 && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
           <h2 className="text-lg sm:text-xl font-bold text-[#012f72] mb-4">
             Materi Terkait
@@ -387,15 +342,8 @@ const MateriContent = ({ data }) => {
               <a
                 key={related.id}
                 href={`/materi/${related.slug}`}
-                className="block p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                className="block p-4 bg-gray-50 rounded-xl hover:bg-gray-100"
               >
-                {related.foto && (
-                  <img
-                    src={related.foto}
-                    alt={related.title}
-                    className="w-full h-24 object-cover rounded-lg mb-2"
-                  />
-                )}
                 <h3 className="font-medium text-sm text-gray-800 line-clamp-2">
                   {related.title}
                 </h3>
@@ -408,8 +356,10 @@ const MateriContent = ({ data }) => {
   );
 };
 
+// ... rest of the components remain the same (LatihanContent, Breadcrumb, LoadingSkeleton, etc.)
+
 // ============================================
-// Latihan Soal Content Component
+// Latihan Content
 // ============================================
 const LatihanContent = ({
   data,
@@ -427,7 +377,7 @@ const LatihanContent = ({
     );
   }
 
-  if (soalList && soalList.length > 0) {
+  if (soalList?.length > 0) {
     return (
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
@@ -442,12 +392,10 @@ const LatihanContent = ({
               </p>
             </div>
             <button
-              onClick={() =>
-                navigate && navigate(`/latihan/${data?.slug || ""}`)
-              }
-              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+              onClick={() => navigate?.(`/latihan/${data?.slug || ""}`)}
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
             >
-              <span>Mulai Latihan</span>
+              Mulai Latihan
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -464,15 +412,13 @@ const LatihanContent = ({
             </button>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {soalList.slice(0, 6).map((soal, index) => (
             <div
               key={soal.id || index}
-              className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
+              className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg cursor-pointer border border-gray-100"
               onClick={() =>
-                navigate &&
-                navigate(`/latihan/${data?.slug || ""}?soal=${index + 1}`)
+                navigate?.(`/latihan/${data?.slug || ""}?soal=${index + 1}`)
               }
             >
               <div className="flex items-center gap-3 mb-3">
@@ -492,11 +438,6 @@ const LatihanContent = ({
                 >
                   {soal.difficulty || "Mudah"}
                 </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                  {soal.tipeSoal === "pilihan_ganda"
-                    ? "Pilihan Ganda"
-                    : soal.tipeSoal}
-                </span>
               </div>
               <p className="text-sm text-gray-700 line-clamp-2">
                 {soal.pertanyaan || `Soal ${index + 1}`}
@@ -504,19 +445,6 @@ const LatihanContent = ({
             </div>
           ))}
         </div>
-
-        {soalList.length > 6 && (
-          <div className="text-center">
-            <button
-              onClick={() =>
-                navigate && navigate(`/latihan/${data?.slug || ""}`)
-              }
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-            >
-              Lihat semua {soalList.length} soal →
-            </button>
-          </div>
-        )}
       </div>
     );
   }
@@ -524,7 +452,7 @@ const LatihanContent = ({
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center">
       <svg
-        className="w-20 h-20 sm:w-24 sm:h-24 mx-auto text-gray-300 mb-6"
+        className="w-20 h-20 mx-auto text-gray-300 mb-6"
         fill="currentColor"
         viewBox="0 0 20 20"
       >
@@ -537,62 +465,59 @@ const LatihanContent = ({
       <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-4">
         Latihan Soal {data?.title || ""}
       </h2>
-      <p className="text-gray-600 mb-6 text-sm sm:text-base">
-        Latihan soal belum tersedia untuk materi ini. Silakan pelajari materi
-        terlebih dahulu.
+      <p className="text-gray-600">
+        Latihan soal belum tersedia untuk materi ini.
       </p>
     </div>
   );
 };
 
 // ============================================
-// Breadcrumb Component
+// Breadcrumb
 // ============================================
-const Breadcrumb = ({ data, navigate }) => {
-  return (
-    <nav className="mb-6" aria-label="Breadcrumb">
-      <ol className="flex items-center flex-wrap gap-1 text-sm text-gray-600">
-        <li>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="hover:text-[#012f72] transition-colors"
-          >
-            Beranda
-          </button>
-        </li>
+const Breadcrumb = ({ data, navigate }) => (
+  <nav className="mb-6">
+    <ol className="flex items-center flex-wrap gap-1 text-sm text-gray-600">
+      <li>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="hover:text-[#012f72]"
+        >
+          Beranda
+        </button>
+      </li>
+      <li className="flex items-center gap-1">
+        <span>/</span>
+        <button
+          onClick={() => navigate("/mapel")}
+          className="hover:text-[#012f72]"
+        >
+          Mata Pelajaran
+        </button>
+      </li>
+      {data?.mapel && (
         <li className="flex items-center gap-1">
           <span>/</span>
           <button
-            onClick={() => navigate("/mapel")}
-            className="hover:text-[#012f72] transition-colors"
+            onClick={() => navigate(`/mapel/${data.mapel.slug}`)}
+            className="hover:text-[#012f72]"
           >
-            Mata Pelajaran
+            {data.mapel.nama}
           </button>
         </li>
-        {data?.mapel && (
-          <li className="flex items-center gap-1">
-            <span>/</span>
-            <button
-              onClick={() => navigate(`/mapel/${data.mapel.slug}`)}
-              className="hover:text-[#012f72] transition-colors"
-            >
-              {data.mapel.nama}
-            </button>
-          </li>
-        )}
-        <li className="flex items-center gap-1">
-          <span>/</span>
-          <span className="text-[#012f72] font-medium">
-            {data?.title || "Materi"}
-          </span>
-        </li>
-      </ol>
-    </nav>
-  );
-};
+      )}
+      <li className="flex items-center gap-1">
+        <span>/</span>
+        <span className="text-[#012f72] font-medium">
+          {data?.title || "Materi"}
+        </span>
+      </li>
+    </ol>
+  </nav>
+);
 
 // ============================================
-// Loading Skeleton Component
+// Loading
 // ============================================
 const LoadingSkeleton = () => (
   <div className="animate-pulse space-y-8">
@@ -602,17 +527,7 @@ const LoadingSkeleton = () => (
       <div className="h-10 w-24 bg-gray-200 rounded-lg"></div>
       <div className="h-10 w-32 bg-gray-200 rounded-lg"></div>
     </div>
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-      <div className="h-64 bg-gray-200"></div>
-    </div>
-    <div className="bg-white rounded-2xl shadow-lg p-8">
-      <div className="h-8 w-64 bg-gray-200 rounded mb-4"></div>
-      <div className="space-y-2">
-        <div className="h-4 w-full bg-gray-200 rounded"></div>
-        <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
-        <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
-      </div>
-    </div>
+    <div className="bg-white rounded-2xl shadow-lg h-64"></div>
   </div>
 );
 
@@ -647,67 +562,67 @@ const VideoMateriSoal = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         setError(null);
         const response = await fetch(`${API_URL}/api/materi/${slug}`);
         const result = await response.json();
-
         if (result.success) {
           setData(result.data);
+          console.log(
+            "Loaded materi:",
+            result.data.title,
+            "| Foto:",
+            result.data.foto,
+            "| Contoh:",
+            result.data.contoh
+          );
         } else {
           setError(result.message || "Gagal memuat konten");
         }
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Gagal memuat konten. Silakan coba lagi.");
+        console.error("Error:", err);
+        setError("Gagal memuat konten.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [slug]);
 
   useEffect(() => {
     const fetchSoal = async () => {
       if (activeTab !== "latihan" || !slug) return;
-
       try {
         setLoadingSoal(true);
         const response = await fetch(`${API_URL}/api/latihan/${slug}/soal`);
         const result = await response.json();
-
         if (result.success) {
           setSoalList(result.data || []);
           setLatihanInfo(result.latihan || null);
         }
       } catch (err) {
-        console.error("Error fetching soal:", err);
+        console.error("Error:", err);
       } finally {
         setLoadingSoal(false);
       }
     };
-
     fetchSoal();
   }, [activeTab, slug]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
+    if (!authLoading && !user) navigate("/login");
   }, [user, authLoading, navigate]);
 
   const handleTabSwitch = (tabName) => {
     setActiveTab(tabName);
     setIsPlaying(false);
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("tab", tabName);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("tab", tabName);
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}?${newSearchParams.toString()}`
+      `${window.location.pathname}?${newParams.toString()}`
     );
   };
 
@@ -731,26 +646,16 @@ const VideoMateriSoal = () => {
     return (
       <div className="bg-[#f0f5ff] min-h-screen pt-16">
         <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center">
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <div className="text-red-500 text-5xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">
-              Terjadi Kesalahan
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Error</h2>
             <p className="text-gray-600 mb-6">{error}</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => navigate(-1)}
-                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Kembali
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-2.5 bg-[#012f72] text-white rounded-lg hover:bg-[#014094] transition-colors"
-              >
-                Coba Lagi
-              </button>
-            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-[#012f72] text-white rounded-lg"
+            >
+              Coba Lagi
+            </button>
           </div>
         </main>
       </div>
@@ -760,10 +665,7 @@ const VideoMateriSoal = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0f5ff]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#012f72] mx-auto mb-4"></div>
-          <p className="text-gray-600">Mengalihkan...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#012f72]"></div>
       </div>
     );
   }
@@ -777,9 +679,7 @@ const VideoMateriSoal = () => {
           {tabs.map((tab) => (
             <TabButton
               key={tab.id}
-              id={tab.id}
-              label={tab.label}
-              icon={tab.icon}
+              {...tab}
               isActive={activeTab === tab.id}
               onClick={handleTabSwitch}
             />

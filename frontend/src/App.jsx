@@ -28,7 +28,17 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         {/* Protected Routes */}
-        <Route path="/materi/:slug" element={<VideoMateriSoal />} />
+   
+        <Route
+          path="/materi/:slug"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <VideoMateriSoal />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/mapel/:subjectId"
           element={

@@ -25,7 +25,6 @@ router.get("/:slug", async (req, res) => {
         deskripsi,
         icon,
         category,
-        color,
         is_active,
         created_at
       FROM jenis_mapel 
