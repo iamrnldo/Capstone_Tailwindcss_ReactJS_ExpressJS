@@ -17,10 +17,15 @@ const profileRouter = require("./profile");
 const authRouter = require("./auth");
 const dashboardRouter = require("./dashboard"); // Add this
 const detailMapelRouter = require("./detail_mapel"); 
+const materiRouter = require("./materi");
+const latihanRouter = require("./latihan");
 
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+
 
 // Configure Cloudinary
 cloudinary.config({
@@ -207,6 +212,8 @@ app.use("/api/profile", profileRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/dashboard", dashboardRouter); // Add this
 app.use("/api/detail-mapel", detailMapelRouter); // Add this line
+app.use("/api/materi", materiRouter);
+app.use("/api/latihan", latihanRouter);
 
 // Legacy endpoints
 app.put("/api/update-name", authenticateJWT, async (req, res) => {

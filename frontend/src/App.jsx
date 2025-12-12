@@ -20,6 +20,7 @@ import Kelas from "./pages/kelas";
 import TryoutPage from "./pages/tryout";
 import AboutUsPage from "./pages/about-us";
 import DetailMapelPage from "./pages/detail_mapel";
+import VideoMateriSoal from "./pages/video-materi-soal";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         {/* Protected Routes */}
+        <Route path="/materi/:slug" element={<VideoMateriSoal />} />
         <Route
           path="/mapel/:subjectId"
           element={
