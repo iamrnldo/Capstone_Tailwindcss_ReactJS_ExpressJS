@@ -19,6 +19,7 @@ const dashboardRouter = require("./dashboard"); // Add this
 const detailMapelRouter = require("./detail_mapel"); 
 const materiRouter = require("./materi");
 const latihanRouter = require("./latihan");
+const tryoutRouter = require("./tryout");
 
 // Body parsers
 app.use(express.json());
@@ -157,6 +158,7 @@ app.get("/auth/google", (req, res, next) => {
 
 
 // Protected Route (get user info from both tables)
+// Protected Route (get user info from both tables)
 app.get("/api/user", authenticateJWT, async (req, res) => {
   console.log("GET /api/user called");
   console.log("User from JWT:", req.user);
@@ -166,13 +168,15 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
 
     if (req.user.type === "google") {
       console.log("Looking in google_users table...");
+      // SELECT * automatically includes is_premium if the column exists
       user = await db.query("SELECT * FROM google_users WHERE id = $1", [
         req.user.id,
       ]);
     } else {
       console.log("Looking in users table...");
+      // UPDATE THIS LINE: Added ", is_premium" to the select list
       user = await db.query(
-        "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at FROM users WHERE id = $1",
+        "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at, is_premium FROM users WHERE id = $1",
         [req.user.id]
       );
     }
@@ -181,7 +185,7 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
     if (user.rows.length === 0) {
       console.log("User not found in primary table, trying other...");
       user = await db.query(
-        "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at FROM users WHERE id = $1",
+        "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at, is_premium FROM users WHERE id = $1",
         [req.user.id]
       );
 
@@ -214,6 +218,7 @@ app.use("/api/dashboard", dashboardRouter); // Add this
 app.use("/api/detail-mapel", detailMapelRouter); // Add this line
 app.use("/api/materi", materiRouter);
 app.use("/api/latihan", latihanRouter);
+app.use("/api/tryout", tryoutRouter);
 
 // Legacy endpoints
 app.put("/api/update-name", authenticateJWT, async (req, res) => {
