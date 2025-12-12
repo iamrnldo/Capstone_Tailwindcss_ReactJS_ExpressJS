@@ -3,11 +3,13 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import jsPDF from "jspdf"; // 1. IMPORT JSPDF
+import jsPDF from "jspdf"; // Pastikan sudah install: npm install jspdf
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// ... (Bagian SVG Import & IMAGE_MAP biarkan tetap sama) ...
+// ============================================
+// 1. DYNAMIC IMAGE LOADER
+// ============================================
 const svgModules = import.meta.glob("../../assets/element/detail_mapel/*.svg", {
   eager: true,
 });
@@ -25,16 +27,20 @@ function getImageFromMap(filename) {
   if (!filename) return null;
   const cleanFilename = filename.trim();
   const baseName = cleanFilename.replace(/\.[^/.]+$/, "");
+
   if (IMAGE_MAP[cleanFilename]) return IMAGE_MAP[cleanFilename];
   if (IMAGE_MAP[baseName]) return IMAGE_MAP[baseName];
   if (IMAGE_MAP[baseName + ".svg"]) return IMAGE_MAP[baseName + ".svg"];
+
   return null;
 }
 
 const getFotoImage = (filename) => getImageFromMap(filename);
 const getContohImage = (filename) => getImageFromMap(filename);
 
-// ... (Bagian Icons biarkan tetap sama) ...
+// ============================================
+// 2. ICONS
+// ============================================
 const VideoIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
@@ -57,7 +63,10 @@ const LatihanIcon = () => (
   </svg>
 );
 
-// ... (TabButton & VideoContent & MateriContent tetap sama) ...
+// ============================================
+// 3. SUB-COMPONENTS
+// ============================================
+
 const TabButton = ({ id, label, icon, isActive, onClick }) => (
   <button
     onClick={() => onClick(id)}
@@ -72,8 +81,28 @@ const TabButton = ({ id, label, icon, isActive, onClick }) => (
   </button>
 );
 
+// --- VIDEO CONTENT (FIXED: Auto Convert to Embed URL) ---
 const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
-  const hasVideo = data?.videoUrl;
+  const videoUrl = data?.videoUrl;
+
+  // Fungsi helper untuk memperbaiki link YouTube
+  const getEmbedUrl = (url) => {
+    if (!url) return null;
+    // Regex untuk mendeteksi ID video YouTube
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[2].length === 11) {
+      // Return format embed: https://www.youtube.com/embed/ID
+      return `https://www.youtube.com/embed/${match[2]}?autoplay=1`;
+    }
+    return url; // Return as is if not standard youtube
+  };
+
+  const embedUrl = getEmbedUrl(videoUrl);
+  const hasVideo = !!embedUrl;
+
   if (hasVideo && isPlaying) {
     return (
       <div className="relative rounded-2xl overflow-hidden shadow-2xl">
@@ -83,8 +112,8 @@ const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
         >
           <iframe
             className="absolute inset-0 w-full h-full"
-            src={data.videoUrl}
-            title={data.title}
+            src={embedUrl}
+            title={data?.title || "Video Pembelajaran"}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -93,6 +122,7 @@ const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
       </div>
     );
   }
+
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl">
       <div
@@ -136,23 +166,26 @@ const VideoContent = ({ data, isPlaying, setIsPlaying }) => {
   );
 };
 
+// --- MATERI CONTENT ---
 const MateriContent = ({ data }) => {
   const fotoImage = getFotoImage(data?.foto);
   const contohImage = getContohImage(data?.contoh);
+
   return (
     <>
+      {/* Hero Image */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
         <div className="relative h-48 sm:h-64 bg-gradient-to-r from-blue-100 to-purple-100">
           {fotoImage ? (
             <img
               src={fotoImage}
-              alt={data?.title || "Materi"}
+              alt={data?.title}
               className="absolute inset-0 w-full h-full object-cover"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <svg
-                className="w-24 h-24 sm:w-32 sm:h-32 text-blue-300"
+                className="w-24 h-24 text-blue-300"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -174,24 +207,28 @@ const MateriContent = ({ data }) => {
           )}
         </div>
       </div>
+
+      {/* Deskripsi */}
       <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-4">
           Apa itu {data?.title || "Materi"} ?
         </h2>
-        <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+        <p className="text-gray-700 leading-relaxed">
           {data?.deskripsi || "Deskripsi materi belum tersedia."}
         </p>
       </div>
+
+      {/* Tujuan */}
       {data?.tujuan && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-4">
             Tujuan Pembelajaran
           </h2>
-          <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-            {data.tujuan}
-          </p>
+          <p className="text-gray-700 leading-relaxed">{data.tujuan}</p>
         </div>
       )}
+
+      {/* Konten HTML */}
       {data?.konten && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-6">
@@ -203,6 +240,8 @@ const MateriContent = ({ data }) => {
           />
         </div>
       )}
+
+      {/* Contoh Image */}
       {data?.contoh && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-6">
@@ -213,21 +252,21 @@ const MateriContent = ({ data }) => {
               <div className="flex flex-col items-center">
                 <img
                   src={contohImage}
-                  alt={`Contoh ${data.title}`}
+                  alt="Contoh"
                   className="max-w-full h-auto max-h-[600px] object-contain rounded-lg shadow-md"
                 />
                 <p className="text-xs text-gray-500 mt-3">{data.contoh}</p>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-sm text-gray-500">
-                  Gambar contoh tidak ditemukan
-                </p>
+              <div className="text-center py-8 text-gray-500 text-sm">
+                Gambar contoh tidak ditemukan
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* Materi Terkait */}
       {data?.relatedMateri?.length > 0 && (
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
           <h2 className="text-lg sm:text-xl font-bold text-[#012f72] mb-4">
@@ -252,11 +291,8 @@ const MateriContent = ({ data }) => {
   );
 };
 
-// ============================================
-// Latihan Content - UPDATED FOR DOWNLOAD
-// ============================================
+// --- LATIHAN CONTENT (WITH PDF DOWNLOAD) ---
 const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
-  // 2. FUNGSI DOWNLOAD PDF
   const handleDownloadPdf = () => {
     if (!soalList || soalList.length === 0) {
       alert("Tidak ada soal untuk diunduh.");
@@ -264,44 +300,36 @@ const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
     }
 
     const doc = new jsPDF();
-
-    // Header
     doc.setFontSize(18);
-    doc.setTextColor(1, 47, 114); // Warna biru EduSukses
+    doc.setTextColor(1, 47, 114);
     doc.text(`Latihan Soal: ${data?.title || "Materi"}`, 14, 22);
 
     doc.setFontSize(11);
     doc.setTextColor(100);
     doc.text(`Total Soal: ${soalList.length}`, 14, 30);
-    doc.line(14, 33, 196, 33); // Garis pembatas
+    doc.line(14, 33, 196, 33);
 
     let yPos = 45;
     const pageHeight = doc.internal.pageSize.height;
 
     soalList.forEach((soal, index) => {
-      // Cek apakah halaman penuh
       if (yPos > pageHeight - 30) {
         doc.addPage();
         yPos = 20;
       }
 
-      // Nomor Soal
       doc.setFontSize(12);
       doc.setTextColor(0);
       doc.setFont("helvetica", "bold");
       doc.text(`Soal ${index + 1} (${soal.difficulty || "Umum"})`, 14, yPos);
       yPos += 7;
 
-      // Pertanyaan (Text wrapping)
       doc.setFont("helvetica", "normal");
       const questionLines = doc.splitTextToSize(soal.pertanyaan || "", 180);
       doc.text(questionLines, 14, yPos);
-
-      // Hitung tinggi text pertanyaan
       yPos += questionLines.length * 7 + 5;
 
-      // Opsi Jawaban (Jika ada di database, sesuaikan key-nya)
-      // Asumsi ada pilihan_a, pilihan_b, dst. Jika tidak, bagian ini bisa dihapus/disesuaikan
+      // Render Pilihan Jawaban
       if (soal.pilihan_a) {
         const options = [
           `A. ${soal.pilihan_a}`,
@@ -310,10 +338,8 @@ const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
           `D. ${soal.pilihan_d}`,
           `E. ${soal.pilihan_e}`,
         ];
-
         options.forEach((opt) => {
-          if (opt.length > 4) {
-            // Cek jika opsi tidak kosong
+          if (opt && opt.length > 4) {
             if (yPos > pageHeight - 20) {
               doc.addPage();
               yPos = 20;
@@ -325,11 +351,9 @@ const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
         });
         yPos += 5;
       }
-
-      yPos += 10; // Spasi antar soal
+      yPos += 10;
     });
 
-    // Save File
     doc.save(`Soal_Latihan_${data?.slug || "EduSukses"}.pdf`);
   };
 
@@ -352,11 +376,10 @@ const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
                 Latihan Soal {data?.title || ""}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {soalList.length} soal tersedia
+                {soalList.length} soal tersedia{" "}
                 {latihanInfo?.waktu && ` • ${latihanInfo.waktu} menit`}
               </p>
             </div>
-            {/* 3. BUTTON DOWNLOAD (Menggantikan Navigasi) */}
             <button
               onClick={handleDownloadPdf}
               className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 transition-colors"
@@ -379,7 +402,6 @@ const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
           </div>
         </div>
 
-        {/* Preview Soal List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {soalList.slice(0, 6).map((soal, index) => (
             <div
@@ -437,7 +459,7 @@ const LatihanContent = ({ data, soalList, loadingSoal, latihanInfo }) => {
   );
 };
 
-// ... (Breadcrumb & LoadingSkeleton tetap sama) ...
+// --- UTILS ---
 const Breadcrumb = ({ data, navigate }) => (
   <nav className="mb-6">
     <ol className="flex items-center flex-wrap gap-1 text-sm text-gray-600">
@@ -481,24 +503,39 @@ const Breadcrumb = ({ data, navigate }) => (
 
 const LoadingSkeleton = () => (
   <div className="w-full max-w-7xl mx-auto space-y-8 animate-pulse">
-    <div className="space-y-6">
-      <div className="h-4 w-48 bg-slate-200 rounded"></div>
-      <div className="h-12 w-full max-w-xl mx-auto bg-slate-200 rounded-lg"></div>
+    <div className="flex items-center gap-2">
+      <div className="h-4 w-20 bg-slate-200 rounded"></div>
+      <div className="h-4 w-4 bg-slate-200 rounded"></div>
+      <div className="h-4 w-32 bg-slate-200 rounded"></div>
     </div>
-    <div className="flex flex-col items-center justify-center py-8">
-      <div className="flex gap-3 mb-3">
-        <div className="w-4 h-4 rounded-full bg-[#012f72] animate-bounce"></div>
-        <div className="w-4 h-4 rounded-full bg-[#f58610] animate-bounce [animation-delay:-0.15s]"></div>
-        <div className="w-4 h-4 rounded-full bg-[#012f72] animate-bounce [animation-delay:-0.3s]"></div>
+    <div className="flex justify-center gap-3">
+      <div className="h-10 w-28 bg-slate-200 rounded-lg"></div>
+      <div className="h-10 w-28 bg-slate-200 rounded-lg"></div>
+      <div className="h-10 w-28 bg-slate-200 rounded-lg"></div>
+    </div>
+    <div className="space-y-8">
+      <div
+        className="relative w-full rounded-2xl overflow-hidden bg-slate-100 shadow-inner border border-slate-200"
+        style={{ paddingBottom: "50%" }}
+      >
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          <div className="flex gap-3 mb-4">
+            <div className="w-5 h-5 rounded-full bg-[#012f72] animate-bounce"></div>
+            <div className="w-5 h-5 rounded-full bg-[#f58610] animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-5 h-5 rounded-full bg-[#012f72] animate-bounce [animation-delay:-0.3s]"></div>
+          </div>
+          <p className="text-[#012f72] font-semibold text-sm animate-pulse">
+            Sedang memuat materi...
+          </p>
+        </div>
       </div>
-      <p className="text-[#012f72] font-semibold text-sm animate-pulse">
-        Sedang memuat materi...
-      </p>
     </div>
   </div>
 );
 
-// ... (Main Component Logic tetap sama) ...
+// ============================================
+// MAIN COMPONENT
+// ============================================
 const VideoMateriSoal = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
