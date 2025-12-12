@@ -108,7 +108,7 @@ const CourseCard = ({ course, mapelSlug, navigate }) => {
         transition: { duration: 0.15 },
       }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => navigate(`/mapel/${mapelSlug}/${course.slug}`)}
+      onClick={() => navigate(`/materi/${course.slug}`)}
     >
       {/* Image Container */}
       <div className="h-[160px] bg-gradient-to-br from-[#012f72] to-[#3b82f6] overflow-hidden relative flex items-center justify-center">

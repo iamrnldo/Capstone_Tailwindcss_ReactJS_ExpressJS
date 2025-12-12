@@ -255,7 +255,7 @@ const MateriContent = ({ data }) => {
       {/* Deskripsi */}
       <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12 mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-[#012f72] mb-4">
-          {data?.title || "Materi"}
+          Apa itu {data?.title || "Materi"} ?
         </h2>
         <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
           {data?.deskripsi || "Deskripsi materi belum tersedia."}
