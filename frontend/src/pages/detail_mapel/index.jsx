@@ -38,9 +38,7 @@ console.log("=== Available SVG Files ===");
 console.log(Object.keys(imageMap));
 console.log("===========================");
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "https://cerulean-tartufo-0a7393.netlify.app/";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const DEFAULT_GRADIENT = "from-[#98c2ff] via-[#a894ed] to-[#df96ff]";
 
 // Function to get SVG image based on foto field

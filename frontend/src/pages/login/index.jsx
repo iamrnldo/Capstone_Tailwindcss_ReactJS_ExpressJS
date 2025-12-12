@@ -15,9 +15,7 @@ import IconPassword from "@/assets/element/icon password.svg";
 import IconEyeOpen from "@/assets/element/buka_mata.svg";
 import IconEyeClosed from "@/assets/element/tutup_mata.svg";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "https://cerulean-tartufo-0a7393.netlify.app/";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const LoginPage = () => {
   const navigate = useNavigate();
