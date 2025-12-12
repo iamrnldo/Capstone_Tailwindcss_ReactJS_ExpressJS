@@ -42,7 +42,7 @@ router.get("/:slug", async (req, res) => {
 
     const mapel = mapelResult.rows[0];
 
-    // Get all sub_bab_mapel for this mapel
+    // Get all sub_bab_mapel for this mapel - ADDED foto field
     const subBabResult = await db.query(
       `SELECT 
         id,
@@ -56,6 +56,7 @@ router.get("/:slug", async (req, res) => {
         contoh,
         materi,
         video,
+        foto,
         created_at
       FROM sub_bab_mapel 
       WHERE id_mapel = $1 
@@ -63,7 +64,7 @@ router.get("/:slug", async (req, res) => {
       [mapel.id]
     );
 
-    // Transform sub_bab_mapel to courses format for frontend
+    // Transform sub_bab_mapel to courses format for frontend - ADDED foto
     const courses = subBabResult.rows.map((subBab, index) => ({
       id: subBab.id,
       title: subBab.nama_sub_bab,
@@ -74,6 +75,7 @@ router.get("/:slug", async (req, res) => {
       contoh: subBab.contoh || "",
       materi: subBab.materi || "",
       video: subBab.video || "",
+      foto: subBab.foto || null, // Add foto field
       urutan: subBab.urutan || index + 1,
       teacher: getDefaultTeacher(index),
       duration: "30 Menit",
@@ -91,7 +93,7 @@ router.get("/:slug", async (req, res) => {
           icon: mapel.icon,
           category: mapel.category,
           color: mapel.color,
-          gradient: DEFAULT_GRADIENT, // Always use the same gradient
+          gradient: DEFAULT_GRADIENT,
           grade: "Kelas 12",
         },
         courses: courses,
@@ -131,7 +133,7 @@ router.get("/:slug/sub-bab", async (req, res) => {
 
     const mapel = mapelResult.rows[0];
 
-    // Build query for sub_bab
+    // Build query for sub_bab - ADDED foto field
     let query = `
       SELECT 
         id,
@@ -140,7 +142,8 @@ router.get("/:slug/sub-bab", async (req, res) => {
         bab_utama,
         urutan,
         deskripsi,
-        video
+        video,
+        foto
       FROM sub_bab_mapel 
       WHERE id_mapel = $1
     `;
@@ -182,7 +185,7 @@ router.get("/:slug/sub-bab", async (req, res) => {
 
     const countResult = await db.query(countQuery, countParams);
 
-    // Transform data
+    // Transform data - ADDED foto
     const courses = subBabResult.rows.map((subBab, index) => ({
       id: subBab.id,
       title: subBab.nama_sub_bab,
@@ -190,6 +193,7 @@ router.get("/:slug/sub-bab", async (req, res) => {
       slug: subBab.kode_sub_bab,
       description: subBab.deskripsi || "",
       video: subBab.video || "",
+      foto: subBab.foto || null,
       urutan: subBab.urutan || index + 1,
       teacher: getDefaultTeacher(index),
       duration: "30 Menit",
@@ -239,7 +243,7 @@ router.get("/:slug/sub-bab/:kode", async (req, res) => {
 
     const mapel = mapelResult.rows[0];
 
-    // Get specific sub_bab
+    // Get specific sub_bab - ADDED foto field
     const subBabResult = await db.query(
       `SELECT 
         id,
@@ -253,6 +257,7 @@ router.get("/:slug/sub-bab/:kode", async (req, res) => {
         contoh,
         materi,
         video,
+        foto,
         created_at
       FROM sub_bab_mapel 
       WHERE id_mapel = $1 AND kode_sub_bab = $2`,
@@ -297,7 +302,7 @@ router.get("/:slug/sub-bab/:kode", async (req, res) => {
           icon: mapel.icon,
           category: mapel.category,
           color: mapel.color,
-          gradient: DEFAULT_GRADIENT, // Always use the same gradient
+          gradient: DEFAULT_GRADIENT,
         },
         subBab: {
           id: subBab.id,
@@ -309,6 +314,7 @@ router.get("/:slug/sub-bab/:kode", async (req, res) => {
           contoh: subBab.contoh || "",
           materi: subBab.materi || "",
           video: subBab.video || "",
+          foto: subBab.foto || null, // Add foto field
           urutan: subBab.urutan,
           teacher: getDefaultTeacher(subBab.id),
           duration: "30 Menit",
@@ -348,7 +354,6 @@ router.get("/:slug/bab-utama", async (req, res) => {
   try {
     const { slug } = req.params;
 
-    // Verify mapel exists
     const mapelResult = await db.query(
       `SELECT id FROM jenis_mapel WHERE slug = $1 AND is_active = true`,
       [slug]
@@ -363,7 +368,6 @@ router.get("/:slug/bab-utama", async (req, res) => {
 
     const mapel = mapelResult.rows[0];
 
-    // Get unique bab_utama with count
     const babResult = await db.query(
       `SELECT 
         bab_utama, 
@@ -396,12 +400,6 @@ router.get("/:slug/bab-utama", async (req, res) => {
 // ============================================
 // Helper Functions
 // ============================================
-
-/**
- * Get default teacher names
- * @param {number} index - Index for rotating through teacher names
- * @returns {string} Teacher name
- */
 function getDefaultTeacher(index) {
   const teachers = [
     "Pak Budi",

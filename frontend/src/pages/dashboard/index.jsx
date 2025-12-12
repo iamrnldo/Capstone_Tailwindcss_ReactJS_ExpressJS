@@ -6,12 +6,6 @@ import { AuthContext } from "../../context/AuthContext";
 
 // Import images
 import hero2 from "../../assets/hero/hero2.png";
-import programlinear1 from "@/assets/element/programlinier1.svg";
-import programlinear from "@/assets/element/programlinear.svg";
-import suratlamarankerja from "@/assets/element/suratlamarankerja.svg";
-import dimensi3vector from "@/assets/element/dimensi3vector.svg";
-import matriks from "@/assets/element/matriks.svg";
-import dimensi3 from "@/assets/element/dimensi3.svg";
 
 // Import mapel icons
 import matematikapeminatan from "@/assets/element/Matematika Peminatan.svg";
@@ -23,6 +17,85 @@ import Kimia from "@/assets/element/Kimia.svg";
 import Biologi from "@/assets/element/Biologi.svg";
 import Prakarya from "@/assets/element/prakarya.svg";
 import Pjok from "@/assets/element/pjok.svg";
+
+// ============================================
+// Dynamic SVG Import for Rekomendasi Belajar
+// Using same logic as detail_mapel/index.jsx
+// ============================================
+
+const rekomendasiSvgModules = import.meta.glob(
+  "/src/assets/element/detail_mapel/*.svg",
+  { eager: true }
+);
+
+// DEBUG: Check raw modules
+console.log("=== Dashboard: RAW SVG Modules ===");
+console.log("rekomendasiSvgModules:", rekomendasiSvgModules);
+console.log("Module count:", Object.keys(rekomendasiSvgModules).length);
+
+// Create imageMap for Rekomendasi Belajar
+const rekomendasiImageMap = {};
+for (const path in rekomendasiSvgModules) {
+  const fileName = path.split("/").pop();
+  rekomendasiImageMap[fileName] =
+    rekomendasiSvgModules[path].default || rekomendasiSvgModules[path];
+  console.log(
+    `Mapped: ${fileName} -> ${rekomendasiImageMap[fileName] ? "OK" : "FAILED"}`
+  );
+}
+
+console.log("=== Dashboard: Available SVG Files ===");
+console.log(Object.keys(rekomendasiImageMap));
+console.log("======================================");
+
+// Function to get recommendation image based on foto/image field
+const getRekomendasiImage = (foto) => {
+  if (!foto) {
+    console.log("❌ foto/image field is empty");
+    return null;
+  }
+
+  console.log(`🔍 Looking for: "${foto}"`);
+  console.log(`   Available: [${Object.keys(rekomendasiImageMap).join(", ")}]`);
+
+  // Direct match
+  if (rekomendasiImageMap[foto]) {
+    console.log(`✅ Found: ${foto}`);
+    return rekomendasiImageMap[foto];
+  }
+
+  // Try with .svg extension
+  const fotoWithSvg = foto.endsWith(".svg") ? foto : `${foto}.svg`;
+  if (rekomendasiImageMap[fotoWithSvg]) {
+    console.log(`✅ Found with .svg extension: ${fotoWithSvg}`);
+    return rekomendasiImageMap[fotoWithSvg];
+  }
+
+  // Case-insensitive match
+  const lowerFoto = foto.toLowerCase();
+  const matchedKey = Object.keys(rekomendasiImageMap).find(
+    (key) => key.toLowerCase() === lowerFoto
+  );
+
+  if (matchedKey) {
+    console.log(`✅ Found (case-insensitive): ${matchedKey}`);
+    return rekomendasiImageMap[matchedKey];
+  }
+
+  // Case-insensitive match with .svg extension
+  const lowerFotoWithSvg = fotoWithSvg.toLowerCase();
+  const matchedKeyWithSvg = Object.keys(rekomendasiImageMap).find(
+    (key) => key.toLowerCase() === lowerFotoWithSvg
+  );
+
+  if (matchedKeyWithSvg) {
+    console.log(`✅ Found (case-insensitive with .svg): ${matchedKeyWithSvg}`);
+    return rekomendasiImageMap[matchedKeyWithSvg];
+  }
+
+  console.log(`❌ Not found: ${foto}`);
+  return null;
+};
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -40,16 +113,6 @@ const MAPEL_ICONS = {
   "Biologi.svg": Biologi,
   "prakarya.svg": Prakarya,
   "pjok.svg": Pjok,
-};
-
-// Image mapping for rekomendasi belajar
-const REKOMENDASI_IMAGES = {
-  programlinear: programlinear,
-  programlinear1: programlinear1,
-  suratlamarankerja: suratlamarankerja,
-  dimensi3vector: dimensi3vector,
-  matriks: matriks,
-  dimensi3: dimensi3,
 };
 
 // Toggle Button Icon Component
@@ -108,6 +171,100 @@ const MapelCard = ({ mapel, index, onClick, isVisible, getIcon }) => {
       {getIcon(mapel)}
       <p className="font-medium text-center text-gray-800">{mapel.nama}</p>
     </div>
+  );
+};
+
+// ============================================
+// Rekomendasi Card Component (Similar to CourseCard)
+// ============================================
+const RekomendasiCard = ({ item, navigate }) => {
+  const [imageError, setImageError] = useState(false);
+  const rekomendasiImage = getRekomendasiImage(item.foto || item.image);
+
+  return (
+    <article
+      onClick={() => navigate(`/materi/${item.slug}`)}
+      className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 cursor-pointer group"
+    >
+      {/* Image Container */}
+      <div className="h-38 w-full bg-gradient-to-br from-[#012f72] to-[#3b82f6] overflow-hidden relative flex items-center justify-center">
+        {rekomendasiImage && !imageError ? (
+          <img
+            src={rekomendasiImage}
+            alt={item.title}
+            className="h-38 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={() => {
+              console.error(`❌ Image load error: ${item.foto || item.image}`);
+              setImageError(true);
+            }}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-white/90 h-38">
+            <svg
+              className="w-16 h-16 text-white/50"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <span className="text-xs text-white/60 text-center px-2 mt-2">
+              {item.foto || item.image || "No image"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-5 pb-4">
+        <span className="inline-block text-xs bg-blue-100 text-blue-700 px-4 py-1 rounded-full">
+          {item.category}
+        </span>
+        <h3 className="font-semibold text-base mt-3 text-gray-900 group-hover:text-[#f58610] transition-colors duration-150 line-clamp-2">
+          {item.title}
+        </h3>
+
+        <div className="mt-4 flex items-center justify-between text-xs text-gray-500 border-t pt-3">
+          <div className="flex items-center gap-1">
+            <div className="w-4 h-4 bg-[#012f72] rounded-full flex items-center justify-center">
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <span>{item.instructor || item.teacher || "Pengajar"}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-4 h-4 bg-[#f58610] rounded-full flex items-center justify-center">
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <span>{item.duration || "30 Menit"}</span>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 };
 
@@ -208,6 +365,15 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (data.success) {
+        console.log("=== Rekomendasi Belajar API Response ===");
+        console.log(
+          "Items:",
+          data.data.map((item) => ({
+            title: item.title,
+            foto: item.foto,
+            image: item.image,
+          }))
+        );
         setRekomendasiBelajar(data.data);
       }
     } catch (err) {
@@ -529,11 +695,21 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* REKOMENDASI BELAJAR */}
+      {/* REKOMENDASI BELAJAR - Updated with Dynamic Image Loading */}
       <section className="max-w-7xl mx-auto px-4 sm:px-10 mt-16">
-        <h2 className="font-bold text-xl sm:text-2xl mb-6 text-gray-900">
-          Rekomendasi Belajar
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
+              Rekomendasi Belajar
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
+              Pilih materi yang ingin kamu pelajari
+            </p>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500">
+            {rekomendasiBelajar.length} Materi
+          </div>
+        </div>
 
         {loadingRekomendasi ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
@@ -541,52 +717,18 @@ const Dashboard = () => {
               <RecommendationSkeleton key={i} />
             ))}
           </div>
-        ) : (
+        ) : rekomendasiBelajar.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {rekomendasiBelajar.map((item) => (
-              <article
-                key={item.id}
-                onClick={() => navigate(`/materi/${item.slug}`)}
-                className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 cursor-pointer"
-              >
-                <img
-                  src={REKOMENDASI_IMAGES[item.image] || programlinear}
-                  alt={item.title}
-                  className="h-38 w-full object-cover"
-                />
-                <div className="p-5 pb-4">
-                  <span className="inline-block text-xs bg-blue-100 text-blue-700 px-4 py-1 rounded-full">
-                    {item.category}
-                  </span>
-                  <h3 className="font-semibold text-base mt-3 text-gray-900">
-                    {item.title}
-                  </h3>
-
-                  <div className="mt-4 flex items-center justify-between text-xs text-gray-500 border-t pt-3">
-                    <div className="flex items-center gap-1">
-                      <span className="inline-block w-4 h-4 bg-gray-200 rounded-full mr-1"></span>
-                      <span>{item.instructor}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span>{item.duration}</span>
-                    </div>
-                  </div>
-                </div>
-              </article>
+              <RekomendasiCard key={item.id} item={item} navigate={navigate} />
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-10">
+            <div className="text-4xl mb-3">📝</div>
+            <p className="text-gray-600 text-sm">
+              Belum ada rekomendasi belajar
+            </p>
           </div>
         )}
       </section>
