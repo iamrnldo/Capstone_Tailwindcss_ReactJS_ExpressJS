@@ -12,21 +12,21 @@ require("./passport");
 
 const app = express();
 
-// Import routers
+// ============================================
+// IMPORT ROUTERS
+// ============================================
 const profileRouter = require("./profile");
 const authRouter = require("./auth");
-const dashboardRouter = require("./dashboard"); // Add this
-const detailMapelRouter = require("./detail_mapel"); 
+const dashboardRouter = require("./dashboard");
+const detailMapelRouter = require("./detail_mapel");
 const materiRouter = require("./materi");
 const latihanRouter = require("./latihan");
-const tryoutRouter = require("./tryout");
+const tryoutRouter = require("./tryout"); // <--- Verified Import
+const kelasRouter = require("./kelas");
 
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
-
 
 // Configure Cloudinary
 cloudinary.config({
@@ -83,7 +83,7 @@ function authenticateJWT(req, res, next) {
 }
 
 // ============================================
-// GOOGLE AUTH ROUTES - LOGIN
+// GOOGLE AUTH ROUTES
 // ============================================
 app.get("/auth/google/login", (req, res, next) => {
   req.session.googleAuthIntent = "login";
@@ -94,9 +94,6 @@ app.get("/auth/google/login", (req, res, next) => {
   );
 });
 
-// ============================================
-// GOOGLE AUTH ROUTES - REGISTER
-// ============================================
 app.get("/auth/google/register", (req, res, next) => {
   req.session.googleAuthIntent = "register";
   passport.authenticate("google", { scope: ["profile", "email"] })(
@@ -106,9 +103,6 @@ app.get("/auth/google/register", (req, res, next) => {
   );
 });
 
-// ============================================
-// GOOGLE AUTH CALLBACK - Handles both login and register
-// ============================================
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
@@ -116,13 +110,10 @@ app.get(
   }),
   (req, res) => {
     const intent = req.session?.googleAuthIntent || "login";
-
-    // Clear the intent from session
     if (req.session) {
       delete req.session.googleAuthIntent;
     }
 
-    // Handle error cases
     if (req.user.error === "not_registered") {
       const encodedEmail = encodeURIComponent(req.user.googleProfile.email);
       const encodedName = encodeURIComponent(req.user.googleProfile.name);
@@ -137,14 +128,13 @@ app.get(
       );
     }
 
-    // Success - redirect to dashboard with token
     res.redirect(
       `${process.env.FRONTEND_URL}/dashboard?token=${req.user.token}`
     );
   }
 );
 
-// Legacy route - defaults to login behavior
+// Legacy route
 app.get("/auth/google", (req, res, next) => {
   req.session.googleAuthIntent = "login";
   passport.authenticate("google", { scope: ["profile", "email"] })(
@@ -154,34 +144,31 @@ app.get("/auth/google", (req, res, next) => {
   );
 });
 
-
-
-
-// Protected Route (get user info from both tables)
-// Protected Route (get user info from both tables)
+// ============================================
+// USER INFO ROUTE (CRITICAL UPDATE)
+// ============================================
 app.get("/api/user", authenticateJWT, async (req, res) => {
   console.log("GET /api/user called");
-  console.log("User from JWT:", req.user);
 
   try {
     let user;
 
     if (req.user.type === "google") {
       console.log("Looking in google_users table...");
-      // SELECT * automatically includes is_premium if the column exists
+      // Selects all columns (including is_premium)
       user = await db.query("SELECT * FROM google_users WHERE id = $1", [
         req.user.id,
       ]);
     } else {
       console.log("Looking in users table...");
-      // UPDATE THIS LINE: Added ", is_premium" to the select list
+      // Explicitly selecting is_premium
       user = await db.query(
         "SELECT id, name, email, picture, phone, gender, kelas, peminatan, school, created_at, is_premium FROM users WHERE id = $1",
         [req.user.id]
       );
     }
 
-    // Fallback: try both tables if not found
+    // Fallback logic
     if (user.rows.length === 0) {
       console.log("User not found in primary table, trying other...");
       user = await db.query(
@@ -210,17 +197,20 @@ app.get("/api/user", authenticateJWT, async (req, res) => {
 });
 
 // ============================================
-// Mount routers
+// MOUNT ROUTERS
 // ============================================
 app.use("/api/profile", profileRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/dashboard", dashboardRouter); // Add this
-app.use("/api/detail-mapel", detailMapelRouter); // Add this line
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/detail-mapel", detailMapelRouter);
 app.use("/api/materi", materiRouter);
 app.use("/api/latihan", latihanRouter);
-app.use("/api/tryout", tryoutRouter);
+app.use("/api/tryout", tryoutRouter); // <--- Verified Mount
+app.use("/api/kelas", kelasRouter);
 
-// Legacy endpoints
+// ============================================
+// LEGACY / UTILITY ROUTES
+// ============================================
 app.put("/api/update-name", authenticateJWT, async (req, res) => {
   const { name } = req.body;
   if (!name) {
@@ -241,12 +231,6 @@ app.put("/api/update-name", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
-// Add to your imports
-const kelasRouter = require("./kelas");
-
-// Add to your route mounts (after other routers)
-app.use("/api/kelas", kelasRouter);
 
 app.post(
   "/api/upload-picture",
@@ -278,7 +262,6 @@ app.post(
   }
 );
 
-// Logout Route
 app.get("/logout", (req, res) => {
   req.logout(() => res.redirect(process.env.FRONTEND_URL));
 });

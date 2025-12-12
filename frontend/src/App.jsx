@@ -21,6 +21,11 @@ import TryoutPage from "./pages/tryout";
 import AboutUsPage from "./pages/about-us";
 import DetailMapelPage from "./pages/detail_mapel";
 import VideoMateriSoal from "./pages/video-materi-soal";
+import ChoosePaketPage from "./pages/choose-paket";
+import TransaksiPage from "./pages/transaksi";
+import KetentuanTkaPage from "./pages/tryout/ketentuan_tka";
+import KetentuanUtbkPage from "./pages/tryout/ketentuan_utbk";
+
 
 export default function App() {
   return (
@@ -45,6 +50,46 @@ export default function App() {
             <ProtectedRoute>
               <Header />
               <DetailMapelPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tryout/ketentuan_tka"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <KetentuanTkaPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tryout/ketentuan_utbk"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <KetentuanUtbkPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/choose-paket"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <ChoosePaketPage />
+              <Footer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transaksi"
+          element={
+            <ProtectedRoute>
+              <Header />
+              <TransaksiPage />
               <Footer />
             </ProtectedRoute>
           }

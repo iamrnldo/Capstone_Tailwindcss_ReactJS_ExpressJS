@@ -7,7 +7,7 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("id-ID", options);
 };
 
-// GET /api/tryout/:category (e.g., /api/tryout/tka or /api/tryout/utbk)
+// GET /api/tryout/:categorySlug
 router.get("/:categorySlug", async (req, res) => {
   try {
     const { categorySlug } = req.params;
@@ -29,14 +29,13 @@ router.get("/:categorySlug", async (req, res) => {
       [categoryId]
     );
 
-    // 3. Construct the response structure (Section -> Cards)
+    // 3. Construct the response structure
     const responseData = {};
     const currentTime = new Date();
 
-    // Loop through packages to find their tryouts
     for (let i = 0; i < packagesResult.rows.length; i++) {
       const pkg = packagesResult.rows[i];
-      const sectionKey = `section${i + 1}`; // Creates section1, section2, etc.
+      const sectionKey = `section${i + 1}`;
 
       const tryoutsResult = await db.query(
         `SELECT id, title, image_path, start_time, end_time, is_premium 
@@ -46,21 +45,20 @@ router.get("/:categorySlug", async (req, res) => {
         [pkg.id]
       );
 
-      // Map DB rows to Frontend Card structure
       const cards = tryoutsResult.rows.map((row) => {
         const startDate = new Date(row.start_time);
         const endDate = new Date(row.end_time);
 
-        // Logic for isOpen
+        // This only checks if the DATE is open
         const isOpen = currentTime >= startDate && currentTime <= endDate;
 
-        // Clean image path (remove ../.. if exists to make it absolute for public folder)
-        const cleanImage = row.image_path.replace("../../", "/");
+        // Clean image path (remove prefix if it exists in DB)
+        const cleanImage = row.image_path.replace("../../assets/element/", "");
 
         return {
           id: row.id,
           title: row.title,
-          image: cleanImage,
+          image: cleanImage, // e.g., "to tka 1 bindo.svg"
           alt: row.title,
           activeDate: `${formatDate(row.start_time)} - ${formatDate(
             row.end_time
