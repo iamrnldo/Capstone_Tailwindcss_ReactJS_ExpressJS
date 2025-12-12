@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // frontend/src/pages/dashboard/index.jsx
 
 import { useEffect, useContext, useRef, useState } from "react";
@@ -20,89 +21,45 @@ import Pjok from "@/assets/element/pjok.svg";
 
 // ============================================
 // Dynamic SVG Import for Rekomendasi Belajar
-// Using same logic as detail_mapel/index.jsx
 // ============================================
-
 const rekomendasiSvgModules = import.meta.glob(
   "/src/assets/element/detail_mapel/*.svg",
   { eager: true }
 );
 
-// DEBUG: Check raw modules
-console.log("=== Dashboard: RAW SVG Modules ===");
-console.log("rekomendasiSvgModules:", rekomendasiSvgModules);
-console.log("Module count:", Object.keys(rekomendasiSvgModules).length);
-
-// Create imageMap for Rekomendasi Belajar
 const rekomendasiImageMap = {};
 for (const path in rekomendasiSvgModules) {
   const fileName = path.split("/").pop();
   rekomendasiImageMap[fileName] =
     rekomendasiSvgModules[path].default || rekomendasiSvgModules[path];
-  console.log(
-    `Mapped: ${fileName} -> ${rekomendasiImageMap[fileName] ? "OK" : "FAILED"}`
-  );
 }
 
-console.log("=== Dashboard: Available SVG Files ===");
-console.log(Object.keys(rekomendasiImageMap));
-console.log("======================================");
-
-// Function to get recommendation image based on foto/image field
 const getRekomendasiImage = (foto) => {
-  if (!foto) {
-    console.log("❌ foto/image field is empty");
-    return null;
-  }
+  if (!foto) return null;
 
-  console.log(`🔍 Looking for: "${foto}"`);
-  console.log(`   Available: [${Object.keys(rekomendasiImageMap).join(", ")}]`);
+  if (rekomendasiImageMap[foto]) return rekomendasiImageMap[foto];
 
-  // Direct match
-  if (rekomendasiImageMap[foto]) {
-    console.log(`✅ Found: ${foto}`);
-    return rekomendasiImageMap[foto];
-  }
-
-  // Try with .svg extension
   const fotoWithSvg = foto.endsWith(".svg") ? foto : `${foto}.svg`;
-  if (rekomendasiImageMap[fotoWithSvg]) {
-    console.log(`✅ Found with .svg extension: ${fotoWithSvg}`);
-    return rekomendasiImageMap[fotoWithSvg];
-  }
+  if (rekomendasiImageMap[fotoWithSvg]) return rekomendasiImageMap[fotoWithSvg];
 
-  // Case-insensitive match
   const lowerFoto = foto.toLowerCase();
   const matchedKey = Object.keys(rekomendasiImageMap).find(
     (key) => key.toLowerCase() === lowerFoto
   );
+  if (matchedKey) return rekomendasiImageMap[matchedKey];
 
-  if (matchedKey) {
-    console.log(`✅ Found (case-insensitive): ${matchedKey}`);
-    return rekomendasiImageMap[matchedKey];
-  }
-
-  // Case-insensitive match with .svg extension
   const lowerFotoWithSvg = fotoWithSvg.toLowerCase();
   const matchedKeyWithSvg = Object.keys(rekomendasiImageMap).find(
     (key) => key.toLowerCase() === lowerFotoWithSvg
   );
+  if (matchedKeyWithSvg) return rekomendasiImageMap[matchedKeyWithSvg];
 
-  if (matchedKeyWithSvg) {
-    console.log(`✅ Found (case-insensitive with .svg): ${matchedKeyWithSvg}`);
-    return rekomendasiImageMap[matchedKeyWithSvg];
-  }
-
-  console.log(`❌ Not found: ${foto}`);
   return null;
 };
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// Maximum mapel to show initially
 const MAX_MAPEL_DISPLAY = 7;
 
-// Image mapping for mapel icons (key = icon value from database)
 const MAPEL_ICONS = {
   "Matematika Peminatan.svg": matematikapeminatan,
   "Matematika Wajib.svg": matematikawajib,
@@ -113,6 +70,33 @@ const MAPEL_ICONS = {
   "Biologi.svg": Biologi,
   "prakarya.svg": Prakarya,
   "pjok.svg": Pjok,
+};
+
+// ============================================
+// Animated Gradient Hero Component (Tailwind)
+// ============================================
+const AnimatedGradientHero = ({ children }) => {
+  return (
+    <section className="relative w-full min-h-[400px] px-4 sm:px-10 py-12 overflow-hidden">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-animated animate-gradient-xy" />
+
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/5" />
+
+      {/* Floating Orb 1 - Purple */}
+      <div className="absolute top-10 left-10 w-72 h-72 bg-purple-400/30 rounded-full blur-3xl animate-float" />
+
+      {/* Floating Orb 2 - Blue */}
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float-reverse" />
+
+      {/* Floating Orb 3 - Indigo (center) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl animate-pulse-slow" />
+
+      {/* Content */}
+      <div className="relative z-10">{children}</div>
+    </section>
+  );
 };
 
 // Toggle Button Icon Component
@@ -149,21 +133,16 @@ const ToggleIcon = ({ isExpanded }) => (
   </div>
 );
 
-// Mapel Card Component with Animation
+// Mapel Card Component
 const MapelCard = ({ mapel, index, onClick, isVisible, getIcon }) => {
   return (
     <div
       onClick={onClick}
-      className={`
-        border rounded-xl p-4 flex flex-col items-center gap-2 
-        hover:shadow-md hover:border-[#012f72] cursor-pointer 
-        transition-all duration-300 ease-out
-        ${
-          isVisible
-            ? "opacity-100 translate-y-0 scale-100"
-            : "opacity-0 translate-y-4 scale-95"
-        }
-      `}
+      className={`border rounded-xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#012f72] cursor-pointer transition-all duration-300 ease-out ${
+        isVisible
+          ? "opacity-100 translate-y-0 scale-100"
+          : "opacity-0 translate-y-4 scale-95"
+      }`}
       style={{
         transitionDelay: isVisible ? `${index * 50}ms` : "0ms",
       }}
@@ -174,29 +153,43 @@ const MapelCard = ({ mapel, index, onClick, isVisible, getIcon }) => {
   );
 };
 
-// ============================================
-// Rekomendasi Card Component (Similar to CourseCard)
-// ============================================
+// Rekomendasi Card Component
 const RekomendasiCard = ({ item, navigate }) => {
   const [imageError, setImageError] = useState(false);
   const rekomendasiImage = getRekomendasiImage(item.foto || item.image);
+
+  const getMapelColor = () => {
+    if (item.mapel?.color) return item.mapel.color;
+    const categoryColors = {
+      Matematika: "from-purple-500 to-purple-700",
+      Fisika: "from-amber-400 to-amber-600",
+      Kimia: "from-green-500 to-green-700",
+      Biologi: "from-emerald-500 to-emerald-700",
+      "Bahasa Indonesia": "from-rose-400 to-rose-600",
+      "Bahasa Inggris": "from-pink-400 to-pink-600",
+    };
+    for (const [key, value] of Object.entries(categoryColors)) {
+      if (item.mapel?.nama?.includes(key) || item.category?.includes(key)) {
+        return value;
+      }
+    }
+    return "from-[#012f72] to-[#3b82f6]";
+  };
 
   return (
     <article
       onClick={() => navigate(`/materi/${item.slug}`)}
       className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 cursor-pointer group"
     >
-      {/* Image Container */}
-      <div className="h-38 w-full bg-gradient-to-br from-[#012f72] to-[#3b82f6] overflow-hidden relative flex items-center justify-center">
+      <div
+        className={`h-38 w-full bg-gradient-to-br ${getMapelColor()} overflow-hidden relative flex items-center justify-center`}
+      >
         {rekomendasiImage && !imageError ? (
           <img
             src={rekomendasiImage}
             alt={item.title}
             className="h-38 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={() => {
-              console.error(`❌ Image load error: ${item.foto || item.image}`);
-              setImageError(true);
-            }}
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center text-white/90 h-38">
@@ -210,25 +203,34 @@ const RekomendasiCard = ({ item, navigate }) => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={1.5}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
               />
             </svg>
-            <span className="text-xs text-white/60 text-center px-2 mt-2">
-              {item.foto || item.image || "No image"}
+            <span className="text-sm text-white/80 text-center px-4 mt-2 font-medium">
+              {item.title}
+            </span>
+          </div>
+        )}
+        {item.mapel?.nama && (
+          <div className="absolute top-3 left-3">
+            <span className="inline-block text-xs bg-white/90 text-gray-800 px-3 py-1 rounded-full font-medium shadow-sm">
+              {item.mapel.nama}
             </span>
           </div>
         )}
       </div>
-
-      {/* Content */}
       <div className="p-5 pb-4">
         <span className="inline-block text-xs bg-blue-100 text-blue-700 px-4 py-1 rounded-full">
-          {item.category}
+          {item.category || item.mapel?.nama || "Materi"}
         </span>
         <h3 className="font-semibold text-base mt-3 text-gray-900 group-hover:text-[#f58610] transition-colors duration-150 line-clamp-2">
           {item.title}
         </h3>
-
+        {item.deskripsi && (
+          <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+            {item.deskripsi}
+          </p>
+        )}
         <div className="mt-4 flex items-center justify-between text-xs text-gray-500 border-t pt-3">
           <div className="flex items-center gap-1">
             <div className="w-4 h-4 bg-[#012f72] rounded-full flex items-center justify-center">
@@ -244,7 +246,11 @@ const RekomendasiCard = ({ item, navigate }) => {
                 />
               </svg>
             </div>
-            <span>{item.instructor || item.teacher || "Pengajar"}</span>
+            <span>
+              {item.instructor ||
+                item.teacher ||
+                `Guru ${item.mapel?.nama || "Pengajar"}`}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-4 h-4 bg-[#f58610] rounded-full flex items-center justify-center">
@@ -268,16 +274,109 @@ const RekomendasiCard = ({ item, navigate }) => {
   );
 };
 
+// Quiz Card Component
+const QuizCard = ({ quiz, navigate }) => {
+  const getMapelColorStyle = () => {
+    if (quiz.mapelColor && quiz.mapelColor.startsWith("#")) {
+      return { backgroundColor: quiz.mapelColor };
+    }
+    const colorMap = {
+      "bg-purple-500": "#8b5cf6",
+      "bg-blue-600": "#2563eb",
+      "bg-rose-400": "#fb7185",
+      "bg-emerald-500": "#10b981",
+      "bg-amber-400": "#fbbf24",
+      "bg-pink-400": "#f472b6",
+      "bg-green-500": "#22c55e",
+    };
+    return { backgroundColor: colorMap[quiz.mapelColor] || "#012f72" };
+  };
+
+  const getDifficultyStyle = () => {
+    switch (quiz.difficulty) {
+      case "Mudah":
+        return "bg-green-100 text-green-700";
+      case "Sedang":
+        return "bg-yellow-100 text-yellow-700";
+      case "Sulit":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-green-100 text-green-700";
+    }
+  };
+
+  const getDifficultyIcon = () => {
+    switch (quiz.difficulty) {
+      case "Mudah":
+        return "✔";
+      case "Sedang":
+        return "⚡";
+      case "Sulit":
+        return "🔥";
+      default:
+        return "✔";
+    }
+  };
+
+  return (
+    <article
+      onClick={() => navigate(`/latihan/${quiz.slug}`)}
+      className="bg-white rounded-3xl shadow-md hover:shadow-lg transition-shadow duration-300 px-6 pt-5 pb-6 cursor-pointer group"
+    >
+      <div
+        className="inline-flex items-center px-4 py-1.5 rounded-full text-white text-xs font-semibold"
+        style={getMapelColorStyle()}
+      >
+        {quiz.mapel}
+      </div>
+      {quiz.babUtama && (
+        <p className="text-xs text-gray-500 mt-2">{quiz.babUtama}</p>
+      )}
+      <h3 className="mt-2 font-semibold text-sm sm:text-base text-gray-900 group-hover:text-[#f58610] transition-colors duration-150 line-clamp-2">
+        {quiz.title}
+      </h3>
+      {quiz.deskripsi && (
+        <p className="text-xs text-gray-400 mt-1 line-clamp-1">
+          {quiz.deskripsi}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs mt-4">
+        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-300 text-blue-700 bg-blue-50">
+          <span>📝</span>
+          <span>{quiz.totalSoal} Soal</span>
+        </span>
+        <span
+          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${getDifficultyStyle()}`}
+        >
+          <span>{getDifficultyIcon()}</span>
+          <span>{quiz.difficulty}</span>
+        </span>
+        {quiz.avgWaktu && (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+            <span>⏱️</span>
+            <span>~{quiz.avgWaktu}s/soal</span>
+          </span>
+        )}
+      </div>
+      <button className="mt-6 w-full bg-[#012f72] text-white text-sm font-semibold py-2.5 rounded-full flex items-center justify-center gap-2 hover:bg-[#01244d] transition-colors group-hover:bg-[#f58610]">
+        <span>Mulai Latihan</span>
+        <span className="text-xs">↗</span>
+      </button>
+    </article>
+  );
+};
+
+// ============================================
+// Main Dashboard Component
+// ============================================
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, loginWithToken } = useContext(AuthContext);
 
-  // Token processing ref
   const tokenProcessed = useRef(false);
   const [processingToken, setProcessingToken] = useState(false);
 
-  // Data states
   const [mapelList, setMapelList] = useState([]);
   const [rekomendasiBelajar, setRekomendasiBelajar] = useState([]);
   const [rekomendasiLatihan, setRekomendasiLatihan] = useState([]);
@@ -286,39 +385,24 @@ const Dashboard = () => {
   const [loadingLatihan, setLoadingLatihan] = useState(true);
   const [error, setError] = useState(null);
 
-  // State for expanded mapel
   const [isMapelExpanded, setIsMapelExpanded] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Ref for the expanded content
   const expandedContentRef = useRef(null);
 
   // Handle Google OAuth token from URL
   useEffect(() => {
     const token = searchParams.get("token");
-
     if (token && !tokenProcessed.current) {
       tokenProcessed.current = true;
       setProcessingToken(true);
-
-      console.log("Processing token from URL...");
-
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete("token");
       setSearchParams({}, { replace: true });
-
       loginWithToken(token)
         .then((result) => {
-          console.log("Token processing result:", result);
           setProcessingToken(false);
-
-          if (!result.success) {
-            console.error("Failed to login with token");
-            navigate("/login");
-          }
+          if (!result.success) navigate("/login");
         })
-        .catch((error) => {
-          console.error("Token processing error:", error);
+        .catch(() => {
           setProcessingToken(false);
           navigate("/login");
         });
@@ -328,34 +412,25 @@ const Dashboard = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     const token = searchParams.get("token");
-
     if (!loading && !processingToken && !token && !user) {
-      console.log("No user, redirecting to login");
       navigate("/login");
     }
   }, [user, loading, processingToken, navigate, searchParams]);
 
-  // Fetch mata pelajaran
+  // Fetch functions
   const fetchMapel = async () => {
     try {
       setLoadingMapel(true);
       const response = await fetch(`${API_URL}/api/dashboard/mapel`);
       const data = await response.json();
-
-      if (data.success) {
-        setMapelList(data.data);
-      } else {
-        console.error("Failed to fetch mapel:", data.message);
-      }
+      if (data.success) setMapelList(data.data);
     } catch (err) {
-      console.error("Error fetching mapel:", err);
       setError("Gagal memuat mata pelajaran");
     } finally {
       setLoadingMapel(false);
     }
   };
 
-  // Fetch rekomendasi belajar
   const fetchRekomendasiBelajar = async () => {
     try {
       setLoadingRekomendasi(true);
@@ -363,19 +438,7 @@ const Dashboard = () => {
         `${API_URL}/api/dashboard/rekomendasi-belajar?limit=6`
       );
       const data = await response.json();
-
-      if (data.success) {
-        console.log("=== Rekomendasi Belajar API Response ===");
-        console.log(
-          "Items:",
-          data.data.map((item) => ({
-            title: item.title,
-            foto: item.foto,
-            image: item.image,
-          }))
-        );
-        setRekomendasiBelajar(data.data);
-      }
+      if (data.success) setRekomendasiBelajar(data.data);
     } catch (err) {
       console.error("Error fetching rekomendasi:", err);
     } finally {
@@ -383,7 +446,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch rekomendasi latihan
   const fetchRekomendasiLatihan = async () => {
     try {
       setLoadingLatihan(true);
@@ -391,10 +453,7 @@ const Dashboard = () => {
         `${API_URL}/api/dashboard/rekomendasi-latihan?limit=6`
       );
       const data = await response.json();
-
-      if (data.success) {
-        setRekomendasiLatihan(data.data);
-      }
+      if (data.success) setRekomendasiLatihan(data.data);
     } catch (err) {
       console.error("Error fetching latihan:", err);
     } finally {
@@ -402,7 +461,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch data when user is available
   useEffect(() => {
     if (user) {
       fetchMapel();
@@ -411,32 +469,19 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  // Handle mapel click
-  const handleMapelClick = (slug) => {
-    navigate(`/mapel/${slug}`);
-  };
+  const handleMapelClick = (slug) => navigate(`/mapel/${slug}`);
 
-  // Handle toggle with animation
   const handleToggleMapel = () => {
     if (isAnimating) return;
-
     setIsAnimating(true);
     setIsMapelExpanded(!isMapelExpanded);
-
-    // Reset animation state after animation completes
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 500);
+    setTimeout(() => setIsAnimating(false), 500);
   };
 
-  // Get displayed mapel based on expanded state
   const initialMapel = mapelList.slice(0, MAX_MAPEL_DISPLAY);
   const extraMapel = mapelList.slice(MAX_MAPEL_DISPLAY);
-
-  // Check if there are more mapel to show
   const hasMoreMapel = mapelList.length > MAX_MAPEL_DISPLAY;
 
-  // Get icon for mapel
   const getMapelIcon = (mapel) => {
     if (mapel.icon && MAPEL_ICONS[mapel.icon]) {
       return (
@@ -447,7 +492,6 @@ const Dashboard = () => {
         />
       );
     }
-
     return (
       <div
         className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -460,7 +504,7 @@ const Dashboard = () => {
     );
   };
 
-  // Show loading state
+  // Loading states
   if (loading || processingToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -474,7 +518,6 @@ const Dashboard = () => {
     );
   }
 
-  // Show nothing while redirecting
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -488,26 +531,26 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen pt-16 mt-2 bg-[#f3f7ff]">
-      {/* HERO SECTION */}
-      <section className="bg-gradient-to-r from-[#99c2ff] via-[#b190ff] to-[#e6a6ff] w-full min-h-[400px] px-4 sm:px-10 py-12 relative overflow-hidden">
+      {/* HERO SECTION with Animated Gradient */}
+      <AnimatedGradientHero>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="text-[#012f72] z-10">
-            <p className="text-sm mb-1">Halo, {user.name} :)</p>
-            <h1 className="text-3xl font-semibold mb-6">
+          <div className="text-white z-10">
+            <p className="text-sm mb-1 text-white/90">Halo, {user.name} :)</p>
+            <h1 className="text-3xl font-semibold mb-6 drop-shadow-md">
               Mau belajar apa hari ini?
             </h1>
 
             <div className="flex gap-4">
               <select
-                className="px-4 py-2 rounded-md bg-white shadow text-sm"
+                className="px-4 py-2 rounded-md bg-white/90 backdrop-blur-sm shadow text-sm text-gray-800 border-0 focus:ring-2 focus:ring-white/50 cursor-pointer"
                 defaultValue={user.kelas || "12"}
               >
-                <option value="12">12</option>
-                <option value="11">11</option>
-                <option value="10">10</option>
+                <option value="12">Kelas 12</option>
+                <option value="11">Kelas 11</option>
+                <option value="10">Kelas 10</option>
               </select>
               <select
-                className="px-4 py-2 rounded-md bg-white shadow text-sm"
+                className="px-4 py-2 rounded-md bg-white/90 backdrop-blur-sm shadow text-sm text-gray-800 border-0 focus:ring-2 focus:ring-white/50 cursor-pointer"
                 defaultValue={user.peminatan || "ipa"}
               >
                 <option value="ipa">IPA</option>
@@ -520,15 +563,14 @@ const Dashboard = () => {
           <img
             src={hero2}
             alt="Hero Illustration"
-            className="w-[420px] mr-12 hidden lg:block"
+            className="w-[420px] mr-12 hidden lg:block drop-shadow-2xl"
           />
         </div>
-      </section>
+      </AnimatedGradientHero>
 
       {/* MATA PELAJARAN */}
       <section className="max-w-7xl mx-auto px-4 sm:px-10 -mt-32 relative z-20">
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 transition-all duration-500 ease-in-out">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-semibold text-lg">Mata Pelajaran</h2>
             {hasMoreMapel && (
@@ -551,7 +593,6 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Loading State */}
           {loadingMapel ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 text-sm">
               {[...Array(8)].map((_, i) => (
@@ -570,7 +611,6 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Initial Mapel Grid (Always Visible) */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 text-sm">
                 {initialMapel.map((mapel, index) => (
                   <MapelCard
@@ -583,20 +623,14 @@ const Dashboard = () => {
                   />
                 ))}
 
-                {/* Toggle Button - Only if there are more mapel */}
                 {hasMoreMapel && (
                   <div
                     onClick={handleToggleMapel}
-                    className={`
-                      border rounded-xl p-4 flex flex-col items-center gap-2 
-                      cursor-pointer transition-all duration-300 
-                      ${
-                        isMapelExpanded
-                          ? "border-[#012f72] bg-[#012f72]/5 shadow-md"
-                          : "hover:shadow-md hover:border-[#012f72]"
-                      }
-                      ${isAnimating ? "pointer-events-none" : ""}
-                    `}
+                    className={`border rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 ${
+                      isMapelExpanded
+                        ? "border-[#012f72] bg-[#012f72]/5 shadow-md"
+                        : "hover:shadow-md hover:border-[#012f72]"
+                    } ${isAnimating ? "pointer-events-none" : ""}`}
                   >
                     <ToggleIcon isExpanded={isMapelExpanded} />
                     <p
@@ -609,7 +643,6 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {/* If no more mapel, show "Lihat Semua" link */}
                 {!hasMoreMapel && mapelList.length > 0 && (
                   <div
                     onClick={() => navigate("/mapel")}
@@ -623,19 +656,14 @@ const Dashboard = () => {
                 )}
               </div>
 
-              {/* Expandable Extra Mapel Section */}
               {hasMoreMapel && (
                 <div
                   ref={expandedContentRef}
-                  className={`
-                    grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 text-sm
-                    transition-all duration-500 ease-in-out overflow-hidden
-                    ${
-                      isMapelExpanded
-                        ? "max-h-[1000px] opacity-100 mt-4 pt-4 border-t border-gray-100"
-                        : "max-h-0 opacity-0 mt-0 pt-0 border-t-0"
-                    }
-                  `}
+                  className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 text-sm transition-all duration-500 ease-in-out overflow-hidden ${
+                    isMapelExpanded
+                      ? "max-h-[1000px] opacity-100 mt-4 pt-4 border-t border-gray-100"
+                      : "max-h-0 opacity-0 mt-0 pt-0 border-t-0"
+                  }`}
                 >
                   {extraMapel.map((mapel, index) => (
                     <MapelCard
@@ -650,26 +678,16 @@ const Dashboard = () => {
                 </div>
               )}
 
-              {/* Bottom Close Button (when expanded) */}
               {hasMoreMapel && isMapelExpanded && (
                 <div
-                  className={`
-                    flex justify-center pt-4 border-t border-gray-100
-                    transition-all duration-500 ease-in-out
-                    ${isMapelExpanded ? "opacity-100" : "opacity-0"}
-                  `}
+                  className={`flex justify-center pt-4 border-t border-gray-100 transition-all duration-500 ease-in-out ${
+                    isMapelExpanded ? "opacity-100" : "opacity-0"
+                  }`}
                 >
                   <button
                     onClick={handleToggleMapel}
                     disabled={isAnimating}
-                    className="
-                      flex items-center gap-2 px-6 py-2 
-                      text-sm text-[#012f72] hover:text-white
-                      bg-transparent hover:bg-[#012f72] 
-                      border border-[#012f72] rounded-full
-                      transition-all duration-300
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                    "
+                    className="flex items-center gap-2 px-6 py-2 text-sm text-[#012f72] hover:text-white bg-transparent hover:bg-[#012f72] border border-[#012f72] rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg
                       className={`w-4 h-4 transition-transform duration-300 ${
@@ -695,7 +713,7 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* REKOMENDASI BELAJAR - Updated with Dynamic Image Loading */}
+      {/* REKOMENDASI BELAJAR */}
       <section className="max-w-7xl mx-auto px-4 sm:px-10 mt-16">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -735,9 +753,19 @@ const Dashboard = () => {
 
       {/* REKOMENDASI LATIHAN SOAL */}
       <section className="max-w-7xl mx-auto px-4 sm:px-10 mt-16 mb-20">
-        <h2 className="font-bold text-xl sm:text-2xl mb-6 text-gray-900">
-          Rekomendasi Latihan Soal
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
+              Rekomendasi Latihan Soal
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
+              Uji pemahamanmu dengan latihan soal
+            </p>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500">
+            {rekomendasiLatihan.length} Latihan
+          </div>
+        </div>
 
         {loadingLatihan ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
@@ -745,41 +773,21 @@ const Dashboard = () => {
               <QuizSkeleton key={i} />
             ))}
           </div>
-        ) : (
+        ) : rekomendasiLatihan.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {rekomendasiLatihan.map((quiz) => (
-              <article
-                key={quiz.id}
-                onClick={() => navigate(`/latihan/${quiz.slug}`)}
-                className="bg-white rounded-3xl shadow-md hover:shadow-lg transition-shadow duration-300 px-6 pt-5 pb-6 cursor-pointer"
-              >
-                <div
-                  className={`inline-flex items-center px-4 py-1.5 rounded-full ${quiz.mapelColor} text-white text-xs font-semibold`}
-                >
-                  {quiz.mapel}
-                </div>
-
-                <h3 className="mt-4 font-semibold text-sm sm:text-base text-gray-900">
-                  {quiz.title}
-                </h3>
-
-                <div className="flex flex-wrap items-center gap-3 text-[11px] sm:text-xs mt-4">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-blue-300 text-blue-700 bg-blue-50">
-                    <span>📝</span>
-                    <span>{quiz.totalSoal} Soal</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700">
-                    <span>✔</span>
-                    <span>{quiz.difficulty}</span>
-                  </span>
-                </div>
-
-                <button className="mt-6 w-full bg-[#012f72] text-white text-sm font-semibold py-2.5 rounded-full flex items-center justify-center gap-2 hover:bg-[#01244d] transition-colors">
-                  <span>Pilih</span>
-                  <span className="text-xs">↗</span>
-                </button>
-              </article>
+              <QuizCard key={quiz.id} quiz={quiz} navigate={navigate} />
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-10">
+            <div className="text-4xl mb-3">📝</div>
+            <p className="text-gray-600 text-sm">
+              Belum ada latihan soal tersedia
+            </p>
+            <p className="text-gray-400 text-xs mt-1">
+              Silakan tambahkan soal terlebih dahulu
+            </p>
           </div>
         )}
       </section>

@@ -2,3 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Animated Gradient Classes */
+@layer utilities {
+  .bg-gradient-animated {
+    background: linear-gradient(
+      -45deg,
+      #1e40af,
+      #3b82f6,
+      #6366f1,
+      #8b5cf6,
+      #a855f7,
+      #c084fc,
+      #a855f7,
+      #8b5cf6,
+      #6366f1,
+      #3b82f6
+    );
+    background-size: 400% 400%;
+  }
+
+  .bg-gradient-blue-purple {
+    background: linear-gradient(
+      135deg,
+      #1e40af 0%,
+      #3b82f6 20%,
+      #6366f1 40%,
+      #8b5cf6 60%,
+      #a855f7 80%,
+      #c084fc 100%
+    );
+    background-size: 200% 200%;
+  }
+
+  .bg-gradient-purple-pink {
+    background: linear-gradient(
+      -45deg,
+      #6366f1,
+      #8b5cf6,
+      #a855f7,
+      #d946ef,
+      #ec4899,
+      #d946ef,
+      #a855f7,
+      #8b5cf6
+    );
+    background-size: 400% 400%;
+  }
+}

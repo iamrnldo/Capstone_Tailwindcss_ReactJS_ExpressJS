@@ -125,11 +125,6 @@ router.get("/mapel", async (req, res) => {
 // ============================================
 // GET /api/dashboard/mapel/:slug - Get Single Mata Pelajaran
 // ============================================
-// Handle mapel click - navigates to detail_mapel page
-const handleMapelClick = (slug) => {
-  navigate(`/mapel/${slug}`);
-};
-
 router.get("/mapel/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
@@ -165,10 +160,10 @@ router.get("/mapel/:slug", async (req, res) => {
 router.get("/categories", async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT category, COUNT(*) as count
-       FROM jenis_mapel
-       WHERE is_active = true
-       GROUP BY category
+      `SELECT category, COUNT(*) as count 
+       FROM jenis_mapel 
+       WHERE is_active = true 
+       GROUP BY category 
        ORDER BY category ASC`
     );
 
@@ -205,157 +200,468 @@ router.get("/categories", async (req, res) => {
 });
 
 // ============================================
-// GET /api/dashboard/rekomendasi-belajar - Get Learning Recommendations
+// GET /api/dashboard/rekomendasi-belajar - Get Learning Recommendations from Database
 // ============================================
 router.get("/rekomendasi-belajar", optionalAuth, async (req, res) => {
   try {
-    const { limit = 6 } = req.query;
+    const { limit = 6, mapel_id, category, random = true } = req.query;
 
-    // Static data for now - replace with database query when you have materi table
-    const recommendations = [
-      {
-        id: 1,
-        title: "Program Linear",
-        category: "Optimasi",
-        instructor: "Pak Nathan",
-        duration: "30 Menit",
-        image: "programlinear",
-        slug: "program-linear",
+    let query = `
+      SELECT 
+        sbm.id,
+        sbm.nama_sub_bab as title,
+        sbm.kode_sub_bab as slug,
+        sbm.bab_utama as category,
+        sbm.deskripsi,
+        sbm.tujuan,
+        sbm.materi,
+        sbm.video,
+        sbm.foto,
+        sbm.urutan,
+        sbm.created_at,
+        jm.id as mapel_id,
+        jm.nama as mapel_nama,
+        jm.slug as mapel_slug,
+        jm.color as mapel_color,
+        jm.icon as mapel_icon
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      WHERE jm.is_active = true
+    `;
+
+    const params = [];
+    let paramCount = 0;
+
+    // Filter by specific mapel
+    if (mapel_id) {
+      paramCount++;
+      query += ` AND sbm.id_mapel = $${paramCount}`;
+      params.push(parseInt(mapel_id));
+    }
+
+    // Filter by category (IPA, IPS, etc.)
+    if (category && category !== "all") {
+      paramCount++;
+      query += ` AND jm.category = $${paramCount}`;
+      params.push(category);
+    }
+
+    // Order by random or by urutan
+    if (random === "true" || random === true) {
+      query += ` ORDER BY RANDOM()`;
+    } else {
+      query += ` ORDER BY sbm.urutan ASC, sbm.created_at DESC`;
+    }
+
+    // Limit results
+    paramCount++;
+    query += ` LIMIT $${paramCount}`;
+    params.push(parseInt(limit));
+
+    const result = await db.query(query, params);
+
+    // Transform data to match frontend expectations
+    const recommendations = result.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      category: row.category || row.mapel_nama,
+      instructor: `Guru ${row.mapel_nama}`,
+      duration: "30 Menit",
+      foto: row.foto,
+      image: row.foto,
+      deskripsi: row.deskripsi,
+      tujuan: row.tujuan,
+      video: row.video,
+      mapel: {
+        id: row.mapel_id,
+        nama: row.mapel_nama,
+        slug: row.mapel_slug,
+        color: row.mapel_color,
+        icon: row.mapel_icon,
       },
-      {
-        id: 2,
-        title: "Surat Lamaran Kerja",
-        category: "Surat Resmi",
-        instructor: "Pak Hahan",
-        duration: "30 Menit",
-        image: "suratlamarankerja",
-        slug: "surat-lamaran-kerja",
-      },
-      {
-        id: 3,
-        title: "Dimensi Tiga",
-        category: "Kalkulus",
-        instructor: "Pak Nathan",
-        duration: "30 Menit",
-        image: "dimensi3",
-        slug: "dimensi-tiga",
-      },
-      {
-        id: 4,
-        title: "Vektor dalam Ruang Dimensi Tiga",
-        category: "Aljabar",
-        instructor: "Bu Cia",
-        duration: "30 Menit",
-        image: "dimensi3vector",
-        slug: "vektor-dimensi-tiga",
-      },
-      {
-        id: 5,
-        title: "Matriks dan Transformasi Linear",
-        category: "Aljabar Linear",
-        instructor: "Bu Atika",
-        duration: "40 Menit",
-        image: "matriks",
-        slug: "matriks-transformasi",
-      },
-      {
-        id: 6,
-        title: "Program Linear",
-        category: "Optimasi",
-        instructor: "Bu Dilla",
-        duration: "15 Menit",
-        image: "programlinear1",
-        slug: "program-linear-2",
-      },
-    ];
+    }));
+
+    // Get total count for pagination info
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      WHERE jm.is_active = true
+    `;
+    const countParams = [];
+    let countParamNum = 0;
+
+    if (mapel_id) {
+      countParamNum++;
+      countQuery += ` AND sbm.id_mapel = $${countParamNum}`;
+      countParams.push(parseInt(mapel_id));
+    }
+
+    if (category && category !== "all") {
+      countParamNum++;
+      countQuery += ` AND jm.category = $${countParamNum}`;
+      countParams.push(category);
+    }
+
+    const countResult = await db.query(countQuery, countParams);
 
     res.json({
       success: true,
-      data: recommendations.slice(0, parseInt(limit)),
+      data: recommendations,
+      total: parseInt(countResult.rows[0].total),
+      message: "Rekomendasi belajar berhasil diambil",
     });
   } catch (err) {
     console.error("Get rekomendasi belajar error:", err);
     res.status(500).json({
       success: false,
       message: "Gagal mengambil rekomendasi belajar",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
 });
 
 // ============================================
-// GET /api/dashboard/rekomendasi-latihan - Get Quiz Recommendations
+// GET /api/dashboard/rekomendasi-latihan - Get Quiz Recommendations from Database
 // ============================================
 router.get("/rekomendasi-latihan", optionalAuth, async (req, res) => {
   try {
-    const { limit = 6 } = req.query;
+    const { limit = 6, mapel_id, category, random = true } = req.query;
 
-    // Static data - replace with database query when ready
-    const quizzes = [
-      {
-        id: 1,
-        title: "Persamaan & Pertidaksamaan Lingkaran",
-        mapel: "Matematika Peminatan",
-        mapelColor: "bg-purple-500",
-        totalSoal: 30,
-        difficulty: "Mudah",
-        slug: "persamaan-lingkaran",
-      },
-      {
-        id: 2,
-        title: "Perbandingan Trigonometri pada Segitiga",
-        mapel: "Matematika Wajib",
-        mapelColor: "bg-blue-600",
-        totalSoal: 30,
-        difficulty: "Mudah",
-        slug: "trigonometri-segitiga",
-      },
-      {
-        id: 3,
-        title: "Menganalisis Teks Editorial",
-        mapel: "Bahasa Indonesia",
-        mapelColor: "bg-rose-400",
-        totalSoal: 30,
-        difficulty: "Mudah",
-        slug: "teks-editorial",
-      },
-      {
-        id: 4,
-        title: "Genetika: Persilangan & Pewarisan",
-        mapel: "Biologi",
-        mapelColor: "bg-emerald-500",
-        totalSoal: 30,
-        difficulty: "Mudah",
-        slug: "genetika",
-      },
-      {
-        id: 5,
-        title: "Fluida Dinamis & Statika Fluida",
-        mapel: "Fisika",
-        mapelColor: "bg-amber-400",
-        totalSoal: 30,
-        difficulty: "Mudah",
-        slug: "fluida",
-      },
-      {
-        id: 6,
-        title: "Reading Comprehension – Narrative Text",
-        mapel: "Bahasa Inggris",
-        mapelColor: "bg-pink-400",
-        totalSoal: 30,
-        difficulty: "Mudah",
-        slug: "narrative-text",
-      },
-    ];
+    let query = `
+      SELECT 
+        sbm.id,
+        sbm.nama_sub_bab as title,
+        sbm.kode_sub_bab as slug,
+        sbm.bab_utama as bab_utama,
+        sbm.foto,
+        sbm.deskripsi,
+        jm.id as mapel_id,
+        jm.nama as mapel_nama,
+        jm.slug as mapel_slug,
+        jm.color as mapel_color,
+        jm.icon as mapel_icon,
+        jm.category as mapel_category,
+        COUNT(s.id) as total_soal,
+        CASE 
+          WHEN AVG(s.bobot_nilai) <= 1 THEN 'Mudah'
+          WHEN AVG(s.bobot_nilai) <= 2 THEN 'Sedang'
+          ELSE 'Sulit'
+        END as difficulty,
+        COALESCE(AVG(s.waktu_pengerjaan), 60) as avg_waktu
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      LEFT JOIN soal s ON s.id_sub_bab = sbm.id
+      WHERE jm.is_active = true
+    `;
+
+    const params = [];
+    let paramCount = 0;
+
+    // Filter by specific mapel
+    if (mapel_id) {
+      paramCount++;
+      query += ` AND sbm.id_mapel = $${paramCount}`;
+      params.push(parseInt(mapel_id));
+    }
+
+    // Filter by category (IPA, IPS, etc.)
+    if (category && category !== "all") {
+      paramCount++;
+      query += ` AND jm.category = $${paramCount}`;
+      params.push(category);
+    }
+
+    // Group by clause
+    query += `
+      GROUP BY 
+        sbm.id, 
+        sbm.nama_sub_bab, 
+        sbm.kode_sub_bab, 
+        sbm.bab_utama,
+        sbm.foto,
+        sbm.deskripsi,
+        jm.id, 
+        jm.nama, 
+        jm.slug, 
+        jm.color, 
+        jm.icon,
+        jm.category
+      HAVING COUNT(s.id) > 0
+    `;
+
+    // Order by random or by total soal
+    if (random === "true" || random === true) {
+      query += ` ORDER BY RANDOM()`;
+    } else {
+      query += ` ORDER BY total_soal DESC, sbm.nama_sub_bab ASC`;
+    }
+
+    // Limit results
+    paramCount++;
+    query += ` LIMIT $${paramCount}`;
+    params.push(parseInt(limit));
+
+    const result = await db.query(query, params);
+
+    // Transform data to match frontend expectations
+    const quizzes = result.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      mapel: row.mapel_nama,
+      mapelSlug: row.mapel_slug,
+      mapelColor: row.mapel_color,
+      mapelIcon: row.mapel_icon,
+      category: row.mapel_category,
+      babUtama: row.bab_utama,
+      totalSoal: parseInt(row.total_soal),
+      difficulty: row.difficulty,
+      avgWaktu: Math.round(row.avg_waktu),
+      foto: row.foto,
+      deskripsi: row.deskripsi,
+    }));
+
+    // Get total count for pagination info
+    let countQuery = `
+      SELECT COUNT(DISTINCT sbm.id) as total
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      INNER JOIN soal s ON s.id_sub_bab = sbm.id
+      WHERE jm.is_active = true
+    `;
+    const countParams = [];
+    let countParamNum = 0;
+
+    if (mapel_id) {
+      countParamNum++;
+      countQuery += ` AND sbm.id_mapel = $${countParamNum}`;
+      countParams.push(parseInt(mapel_id));
+    }
+
+    if (category && category !== "all") {
+      countParamNum++;
+      countQuery += ` AND jm.category = $${countParamNum}`;
+      countParams.push(category);
+    }
+
+    const countResult = await db.query(countQuery, countParams);
 
     res.json({
       success: true,
-      data: quizzes.slice(0, parseInt(limit)),
+      data: quizzes,
+      total: parseInt(countResult.rows[0].total),
+      message: "Rekomendasi latihan berhasil diambil",
     });
   } catch (err) {
     console.error("Get rekomendasi latihan error:", err);
     res.status(500).json({
       success: false,
       message: "Gagal mengambil rekomendasi latihan",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
+// ============================================
+// GET /api/dashboard/latihan/:slug - Get Quiz Detail by Slug
+// ============================================
+router.get("/latihan/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Get sub_bab info with question count
+    const subBabResult = await db.query(
+      `
+      SELECT 
+        sbm.*,
+        jm.nama as mapel_nama,
+        jm.slug as mapel_slug,
+        jm.color as mapel_color,
+        jm.icon as mapel_icon,
+        jm.category as mapel_category,
+        COUNT(s.id) as total_soal,
+        COALESCE(SUM(s.waktu_pengerjaan), COUNT(s.id) * 60) as total_waktu
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      LEFT JOIN soal s ON s.id_sub_bab = sbm.id
+      WHERE sbm.kode_sub_bab = $1 AND jm.is_active = true
+      GROUP BY sbm.id, jm.id, jm.nama, jm.slug, jm.color, jm.icon, jm.category
+      `,
+      [slug]
+    );
+
+    if (subBabResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Latihan tidak ditemukan",
+      });
+    }
+
+    const subBab = subBabResult.rows[0];
+
+    // Get all questions for this sub_bab
+    const soalResult = await db.query(
+      `
+      SELECT 
+        id,
+        kode_soal,
+        tipe_soal,
+        pertanyaan,
+        pilihan_a,
+        pilihan_b,
+        pilihan_c,
+        pilihan_d,
+        pilihan_e,
+        bobot_nilai,
+        waktu_pengerjaan,
+        gambar_soal
+      FROM soal
+      WHERE id_sub_bab = $1
+      ORDER BY kode_soal ASC
+      `,
+      [subBab.id]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        id: subBab.id,
+        title: subBab.nama_sub_bab,
+        slug: subBab.kode_sub_bab,
+        babUtama: subBab.bab_utama,
+        deskripsi: subBab.deskripsi,
+        foto: subBab.foto,
+        totalSoal: parseInt(subBab.total_soal),
+        totalWaktu: parseInt(subBab.total_waktu),
+        mapel: {
+          id: subBab.id_mapel,
+          nama: subBab.mapel_nama,
+          slug: subBab.mapel_slug,
+          color: subBab.mapel_color,
+          icon: subBab.mapel_icon,
+          category: subBab.mapel_category,
+        },
+        soal: soalResult.rows.map((s) => ({
+          id: s.id,
+          kode: s.kode_soal,
+          tipe: s.tipe_soal,
+          pertanyaan: s.pertanyaan,
+          pilihan: {
+            a: s.pilihan_a,
+            b: s.pilihan_b,
+            c: s.pilihan_c,
+            d: s.pilihan_d,
+            e: s.pilihan_e,
+          },
+          bobot: s.bobot_nilai,
+          waktu: s.waktu_pengerjaan,
+          gambar: s.gambar_soal,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error("Get latihan detail error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Gagal mengambil detail latihan",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
+// ============================================
+// GET /api/dashboard/sub-bab/:slug - Get Single Sub Bab Detail
+// ============================================
+router.get("/sub-bab/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const result = await db.query(
+      `
+      SELECT 
+        sbm.*,
+        jm.nama as mapel_nama,
+        jm.slug as mapel_slug,
+        jm.color as mapel_color,
+        jm.icon as mapel_icon,
+        jm.category as mapel_category
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      WHERE sbm.kode_sub_bab = $1 AND jm.is_active = true
+      `,
+      [slug]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Materi tidak ditemukan",
+      });
+    }
+
+    const row = result.rows[0];
+
+    // Get related sub bab from same mapel
+    const relatedResult = await db.query(
+      `
+      SELECT 
+        sbm.id,
+        sbm.nama_sub_bab as title,
+        sbm.kode_sub_bab as slug,
+        sbm.bab_utama as category,
+        sbm.foto,
+        jm.nama as mapel_nama
+      FROM sub_bab_mapel sbm
+      INNER JOIN jenis_mapel jm ON sbm.id_mapel = jm.id
+      WHERE sbm.id_mapel = $1 
+        AND sbm.id != $2 
+        AND jm.is_active = true
+      ORDER BY sbm.urutan ASC
+      LIMIT 4
+      `,
+      [row.id_mapel, row.id]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        id: row.id,
+        title: row.nama_sub_bab,
+        slug: row.kode_sub_bab,
+        category: row.bab_utama,
+        deskripsi: row.deskripsi,
+        tujuan: row.tujuan,
+        contoh: row.contoh,
+        materi: row.materi,
+        video: row.video,
+        foto: row.foto,
+        urutan: row.urutan,
+        mapel: {
+          id: row.id_mapel,
+          nama: row.mapel_nama,
+          slug: row.mapel_slug,
+          color: row.mapel_color,
+          icon: row.mapel_icon,
+          category: row.mapel_category,
+        },
+        related: relatedResult.rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          slug: r.slug,
+          category: r.category,
+          foto: r.foto,
+          mapel: r.mapel_nama,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error("Get sub bab detail error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Gagal mengambil detail materi",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
 });
