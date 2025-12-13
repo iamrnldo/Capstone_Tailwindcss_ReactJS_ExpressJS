@@ -36,9 +36,12 @@ cloudinary.config({
 });
 
 // Multer setup
+// Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    // UBAH DARI "uploads/" MENJADI "/tmp"
+    // Vercel hanya mengizinkan tulis file di folder /tmp
+    cb(null, "/tmp"); 
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);

@@ -100,7 +100,7 @@ const LoginPage = () => {
       } else {
         setError(result.error);
       }
-    // eslint-disable-next-line no-unused-vars
+      // eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
