@@ -11,7 +11,7 @@ import {
 import bgProfile from "../../assets/bg/bg-1.png";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
+  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app";
 
 const Profile = () => {
   const navigate = useNavigate();

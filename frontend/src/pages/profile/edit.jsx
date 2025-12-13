@@ -8,7 +8,7 @@ import {
 } from "../../constants/enums";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
+  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app";
 
 const EditProfile = () => {
   const navigate = useNavigate();

@@ -39,7 +39,7 @@ console.log(Object.keys(imageMap));
 console.log("===========================");
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
+  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app";
 const DEFAULT_GRADIENT = "from-[#98c2ff] via-[#a894ed] to-[#df96ff]";
 
 // Function to get SVG image based on foto field

@@ -15,7 +15,7 @@ import IconDropdown from "@/assets/element/icon dropdown.svg";
 import IconEyeOpen from "@/assets/element/buka_mata.svg";
 import IconEyeClosed from "@/assets/element/tutup_mata.svg";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
+const API_URL = import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app";
 
 // Reusable Input Component
 const InputField = ({

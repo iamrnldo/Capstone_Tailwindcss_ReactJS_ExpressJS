@@ -99,7 +99,7 @@ const TryoutPage = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `https://capstone-omega-puce.vercel.app/api/tryout/${activeTab}`
+          `https://capstone-omega-puce.vercel.app/api/tryout${activeTab}`
         );
         setTryoutData(response.data);
       } catch (error) {
