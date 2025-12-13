@@ -39,7 +39,7 @@ const validatePhone = (phone) => {
 // ============================================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = "uploads/";
+    const uploadDir = "/tmp";
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
