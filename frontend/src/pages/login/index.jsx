@@ -41,7 +41,7 @@ const LoginPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      const from = location.state?.from?.pathname || "/dashboard";
+      const from = location.state?.from?.pathname || "dashboard";
       navigate(from, { replace: true });
     }
   }, [user, loading, navigate, location]);
