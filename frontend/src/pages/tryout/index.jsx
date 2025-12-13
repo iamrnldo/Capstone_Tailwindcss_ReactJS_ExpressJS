@@ -83,7 +83,7 @@ const TryoutPage = () => {
         return;
       }
       try {
-        const response = await axios.get("http://localhost:5000/api/user", {
+        const response = await axios.get("https://capstone-omega-puce.vercel.app/api/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUserData(response.data);
@@ -99,7 +99,7 @@ const TryoutPage = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/tryout/${activeTab}`
+          `https://capstone-omega-puce.vercel.app/api/tryout/${activeTab}`
         );
         setTryoutData(response.data);
       } catch (error) {

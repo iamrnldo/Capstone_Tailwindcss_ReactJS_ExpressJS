@@ -15,7 +15,8 @@ import IconPassword from "@/assets/element/icon password.svg";
 import IconEyeOpen from "@/assets/element/buka_mata.svg";
 import IconEyeClosed from "@/assets/element/tutup_mata.svg";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
 
 const LoginPage = () => {
   const navigate = useNavigate();

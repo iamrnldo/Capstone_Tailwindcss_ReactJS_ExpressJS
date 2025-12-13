@@ -15,7 +15,8 @@ import Biologi from "@/assets/element/Biologi.svg";
 import Prakarya from "@/assets/element/prakarya.svg";
 import Pjok from "@/assets/element/pjok.svg";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
 
 // Image mapping for mapel icons
 const MAPEL_ICONS = {

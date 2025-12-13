@@ -57,7 +57,8 @@ const getRekomendasiImage = (foto) => {
   return null;
 };
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://capstone-omega-puce.vercel.app/";
 const MAX_MAPEL_DISPLAY = 7;
 
 const MAPEL_ICONS = {

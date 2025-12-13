@@ -28,7 +28,7 @@ const VerifyEmail = () => {
   const verifyEmail = async (token) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/auth/verify-email/${token}`
+        `https://capstone-omega-puce.vercel.app/api/auth/verify-email/${token}`
       );
 
       setStatus("success");

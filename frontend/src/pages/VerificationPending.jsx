@@ -24,7 +24,7 @@ const VerificationPending = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/resend-verification",
+        "https://capstone-omega-puce.vercel.app/api/auth/resend-verification",
         { email }
       );
 

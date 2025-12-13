@@ -20,7 +20,7 @@ const ForgotPasswordPage = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/forgot-password",
+        "https://capstone-omega-puce.vercel.app/api/auth/forgot-password",
         { email }
       );
       setSuccess(
